@@ -30,6 +30,10 @@ jobs:
       - name: Pytest
         run: uv run pytest -q
 
+      - name: Install OCR extras (optional)
+        run: uv sync --dev --extra ocr || true
+        continue-on-error: true
+
   extensions-install-dry-run:
     runs-on: ubuntu-latest
     steps:

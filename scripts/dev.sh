@@ -23,6 +23,17 @@ install_engine_deps() {
   fi
 }
 
+ensure_ocr_ready() {
+  if [[ "${ENABLED}" != "true" ]]; then
+    return 0
+  fi
+  if ! command -v tesseract >/dev/null 2>&1; then
+    log "Tesseract not found — running setup-ocr.sh ..."
+    "${ROOT}/scripts/setup-ocr.sh" || log "WARN: setup-ocr failed; OCR may not work until Tesseract is installed"
+  fi
+  install_engine_deps
+}
+
 [[ -d "${STIRLING}" ]] || { log "Initializing submodule..."; git -C "${ROOT}" submodule update --init --recursive; }
 
 command -v task >/dev/null 2>&1 || die "Task not found. Install: brew install go-task (https://taskfile.dev/installation/)"
@@ -43,7 +54,7 @@ trap cleanup EXIT INT TERM
 if [[ "${ENABLED}" == "true" ]]; then
   log "Starting French Reader engine on :5002 ..."
   (
-    install_engine_deps
+    ensure_ocr_ready
     if command -v uv >/dev/null 2>&1; then
       uv run uvicorn french_reader.main:app --host 0.0.0.0 --port 5002 --reload
     else

@@ -11,6 +11,8 @@ import { useToolWorkflow } from "@app/contexts/ToolWorkflowContext";
 import { useViewScopedFiles } from "@app/hooks/tools/shared/useViewScopedFiles";
 import { useFrenchReaderPageState } from "@app/hooks/tools/frenchReader/useFrenchReaderPageState";
 import { AiSidePanel } from "@app/components/frenchReader/AiSidePanel";
+import { FrenchReaderRegionPortal } from "@app/components/frenchReader/FrenchReaderRegionPortal";
+import { FrenchReaderProvider } from "@app/contexts/FrenchReaderContext";
 import type { BaseToolProps } from "@app/types/tool";
 
 const EMPTY_OPERATION = {
@@ -30,11 +32,7 @@ const EMPTY_OPERATION = {
   undoOperation: async () => {},
 };
 
-/**
- * French Reader — M1: Stirling viewer + reading assistant side panel.
- * M2+: region OCR overlay on the viewer canvas.
- */
-export default function FrenchReader(_props: BaseToolProps) {
+function FrenchReaderInner(_props: BaseToolProps) {
   const { t } = useTranslation();
   const { files: allFiles } = useAllFiles();
   const scopedFiles = useViewScopedFiles();
@@ -89,25 +87,43 @@ export default function FrenchReader(_props: BaseToolProps) {
     ];
   }, [hasFiles, isFrenchReaderActive, activeFile, pageState, t]);
 
-  return createToolFlow({
-    title: {
-      title: t("frenchReader.title", "French Reader"),
-      description: t(
-        "frenchReader.subtitle",
-        "Read French PDFs with OCR and TTS assistance",
-      ),
-    },
-    files: {
-      selectedFiles: activeFile ? [activeFile] : [],
-      isCollapsed: false,
-      minFiles: 1,
-    },
-    steps,
-    review: {
-      isVisible: false,
-      operation: EMPTY_OPERATION,
-      title: "",
-      onFileClick: () => {},
-    },
-  });
+  return (
+    <>
+      {isFrenchReaderActive && (
+        <FrenchReaderRegionPortal
+          pageNumber={pageState.currentPage}
+          pageIndex={Math.max(0, pageState.currentPage - 1)}
+        />
+      )}
+      {createToolFlow({
+        title: {
+          title: t("frenchReader.title", "French Reader"),
+          description: t(
+            "frenchReader.subtitle",
+            "Read French PDFs with OCR and TTS assistance",
+          ),
+        },
+        files: {
+          selectedFiles: activeFile ? [activeFile] : [],
+          isCollapsed: false,
+          minFiles: 1,
+        },
+        steps,
+        review: {
+          isVisible: false,
+          operation: EMPTY_OPERATION,
+          title: "",
+          onFileClick: () => {},
+        },
+      })}
+    </>
+  );
+}
+
+export default function FrenchReader(props: BaseToolProps) {
+  return (
+    <FrenchReaderProvider>
+      <FrenchReaderInner {...props} />
+    </FrenchReaderProvider>
+  );
 }

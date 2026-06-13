@@ -73,6 +73,28 @@ cd stirling-upstream && task dev   # 行为接近上游
 | 扩展单元测试 | `cd extensions/french-reader-engine && uv run pytest` |
 | 安装脚本 | `./scripts/install-extensions.sh` |
 
+### OCR 引擎（M2+）
+
+首次使用或遇到 `No OCR engine available` 时：
+
+```bash
+./scripts/setup-ocr.sh          # 安装 Tesseract + 法语包 (macOS: brew)
+cd extensions/french-reader-engine && uv sync --dev
+./scripts/dev.sh                # 重启 engine
+```
+
+检查 engine 状态：
+
+```bash
+curl http://localhost:5002/french-reader/ocr/engines
+```
+
+默认识别：**Tesseract (fra)**。可选更高精度 PaddleOCR：
+
+```bash
+cd extensions/french-reader-engine && uv sync --dev --extra ocr-paddle
+```
+
 Stirling 全量检查（耗时，可选）：
 
 ```bash

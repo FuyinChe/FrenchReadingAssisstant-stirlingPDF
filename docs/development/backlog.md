@@ -47,15 +47,15 @@
 
 | ID | 任务 | 产出 | 估时 | 状态 |
 |----|------|------|------|------|
-| TASK-M201 | `RegionSelector` overlay（拖拽矩形） | 前端组件 | 6h | [ ] |
-| TASK-M202 | canvas 裁剪 → base64，坐标归一化 | 裁剪逻辑 | 4h | [ ] |
-| TASK-M203 | engine：PaddleOCR 封装 `ocr_service.py` | OCR 服务 | 4h | [ ] |
-| TASK-M204 | `POST /french-reader/ocr/region` + Pydantic schema | API | 3h | [ ] |
-| TASK-M205 | Vite proxy `/french-reader` → engine:5001 | 开发联调 | 2h | [ ] |
-| TASK-M206 | `AiSidePanel`：text、confidence、loading、复制 | 侧栏 UI | 4h | [ ] |
-| TASK-M207 | 选区完成 → 自动 OCR → 面板展开 | 联动 | 3h | [ ] |
-| TASK-M208 | OCR 后处理（法语断行、标点） | postprocess | 3h | [ ] |
-| TASK-M209 | `tests/test_ocr.py` 固定样例 snapshot | 测试 | 3h | [ ] |
+| TASK-M201 | `RegionSelector` overlay（拖拽矩形） | 前端组件 | 6h | [x] |
+| TASK-M202 | canvas 裁剪 → base64，坐标归一化 | 裁剪逻辑 | 4h | [x] |
+| TASK-M203 | engine：PaddleOCR 封装 `ocr_service.py` | OCR 服务 | 4h | [x] |
+| TASK-M204 | `POST /french-reader/ocr/region` + Pydantic schema | API | 3h | [x] |
+| TASK-M205 | Vite proxy `/french-reader` → engine:5002 | 开发联调 | 2h | [x] |
+| TASK-M206 | `AiSidePanel`：text、confidence、loading、复制 | 侧栏 UI | 4h | [x] |
+| TASK-M207 | 选区完成 → 自动 OCR → 面板展开 | 联动 | 3h | [x] |
+| TASK-M208 | OCR 后处理（法语断行、标点） | postprocess | 3h | [x] |
+| TASK-M209 | `tests/test_ocr.py` 固定样例 snapshot | 测试 | 3h | [x] |
 | TASK-M210 | （可选）Java `FrenchReaderProxyController` 转发 OCR | 统一 8080 | 4h | [ ] |
 | TASK-M211 | 准备法语漫画测试页（版权合规） | 测试素材说明 | 2h | [ ] |
 
