@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { lazy, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import LocalIcon from "@app/components/shared/LocalIcon";
@@ -7,16 +7,16 @@ import {
   ToolCategoryId,
   type PrototypeToolRegistry,
 } from "@app/data/toolsTaxonomy";
-import FrenchReader from "@app/tools/frenchReader/FrenchReader";
 import { frenchReaderOperationConfig } from "@app/hooks/tools/frenchReader/useFrenchReaderOperation";
 import { getSynonyms } from "@app/utils/toolSynonyms";
 
 const ENABLED =
   import.meta.env.VITE_FRENCH_READER_ENABLED !== "false";
 
-/**
- * French Reader tool registry — injected via install-extensions patch.
- */
+const FrenchReader = lazy(
+  () => import("@app/tools/frenchReader/FrenchReader"),
+);
+
 export function useFrenchReaderToolRegistry(): PrototypeToolRegistry {
   const { t } = useTranslation();
 
@@ -43,9 +43,11 @@ export function useFrenchReaderToolRegistry(): PrototypeToolRegistry {
         categoryId: ToolCategoryId.ADVANCED_TOOLS,
         subcategoryId: SubcategoryId.DOCUMENT_REVIEW,
         maxFiles: 1,
+        workbench: "viewer",
         endpoints: ["french-reader"],
         operationConfig: frenchReaderOperationConfig,
         automationSettings: null,
+        supportsAutomate: false,
         synonyms: getSynonyms(t, "frenchReader"),
         versionStatus: "beta",
       },

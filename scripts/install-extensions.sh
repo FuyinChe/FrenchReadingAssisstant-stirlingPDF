@@ -20,17 +20,19 @@ log "Installing French Reader extensions (enabled=${ENABLED})"
 FE_CORE="${STIRLING}/frontend/editor/src/core"
 mkdir -p "${FE_CORE}/tools/frenchReader"
 mkdir -p "${FE_CORE}/hooks/tools/frenchReader"
+mkdir -p "${FE_CORE}/components/frenchReader"
 mkdir -p "${FE_CORE}/extensions/french-reader"
 
 cp "${EXT_FRONTEND}/src/tools/FrenchReader.tsx" "${FE_CORE}/tools/frenchReader/FrenchReader.tsx"
-cp "${EXT_FRONTEND}/src/hooks/tools/frenchReader/useFrenchReaderOperation.ts" \
-  "${FE_CORE}/hooks/tools/frenchReader/useFrenchReaderOperation.ts"
+cp "${EXT_FRONTEND}/src/hooks/tools/frenchReader/"*.ts "${FE_CORE}/hooks/tools/frenchReader/"
+cp "${EXT_FRONTEND}/src/components/frenchReader/"*.tsx "${FE_CORE}/components/frenchReader/"
 cp "${EXT_FRONTEND}/src/extensions/french-reader/useFrenchReaderToolRegistry.tsx" \
   "${FE_CORE}/extensions/french-reader/useFrenchReaderToolRegistry.tsx"
 
 # Remove legacy install paths (pre-core layout)
 rm -rf "${STIRLING}/frontend/editor/src/tools/frenchReader" \
   "${STIRLING}/frontend/editor/src/hooks/tools/frenchReader" \
+  "${STIRLING}/frontend/editor/src/components/frenchReader" \
   "${STIRLING}/frontend/editor/src/extensions/french-reader"
 
 # --- Frontend: apply minimal patches (reversible via git checkout in submodule) ---
@@ -45,17 +47,8 @@ else
 fi
 
 # --- Engine: sidecar service (no Stirling engine core changes) ---
-log "Installing French Reader engine Python deps..."
-(
-  cd "${EXT_ENGINE}"
-  if command -v uv >/dev/null 2>&1; then
-    uv sync --dev
-  else
-    log "uv not found — using pip (recommended: brew install uv)"
-    python3 -m pip install -e .
-  fi
-)
 log "French Reader engine runs as sidecar on port 5002 (see scripts/dev.sh)"
+log "Install Python deps manually: cd extensions/french-reader-engine && uv sync --dev"
 
 date -u +"%Y-%m-%dT%H:%M:%SZ" > "${MARKER}"
 log "Done. Marker written to ${MARKER}"

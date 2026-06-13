@@ -12,7 +12,7 @@
 | ID | 任务 | 产出 | 估时 | 状态 |
 |----|------|------|------|------|
 | TASK-M001 | 添加 `stirling-upstream` git submodule（Stirling-Tools/Stirling-PDF） | `.gitmodules` | 1h | [x] |
-| TASK-M002 | 验证 Stirling dev：`task install && task dev` | 环境文档 `docs/dev-setup.md` | 4h | [~] |
+| TASK-M002 | 验证 Stirling dev：`task install && task dev` | 环境文档 `docs/dev-setup.md` | 4h | [x] |
 | TASK-M003 | 阅读 LICENSE，编写 `docs/plan/07-license-compliance.md` | 合规说明 | 2h | [x] |
 | TASK-M004 | 创建 `extensions/french-reader-engine/`（uv + 空 router） | Python 骨架 | 2h | [x] |
 | TASK-M005 | 创建 `extensions/french-reader-frontend/`（空 FrenchReader.tsx） | React 骨架 | 2h | [x] |
@@ -30,13 +30,13 @@
 
 | ID | 任务 | 产出 | 估时 | 状态 |
 |----|------|------|------|------|
-| TASK-M101 | 调研 Stirling PDF viewer 组件 / hook 复用点 | 调研笔记 | 3h | [ ] |
-| TASK-M102 | 实现 `FrenchReader.tsx` 双栏布局（PDF + 侧栏占位） | Tool 主组件 | 4h | [ ] |
-| TASK-M103 | `useFrenchReaderOperation.ts`（ToolType.custom） | operation hook | 3h | [ ] |
-| TASK-M104 | 注册 Tool：`useTranslatedToolRegistry.tsx` + 分类/图标 | 工具可见 | 2h | [ ] |
-| TASK-M105 | i18n：`en` / `zh` 工具名与描述 | translation.json | 2h | [ ] |
-| TASK-M106 | FileContext 集成：读取当前 PDF，展示首页 | 无需重传 | 4h | [ ] |
-| TASK-M107 | 翻页、页码、缩放（复用或包装现有 viewer） | 阅读交互 | 6h | [ ] |
+| TASK-M101 | 调研 Stirling PDF viewer 组件 / hook 复用点 | 调研笔记 | 3h | [x] |
+| TASK-M102 | 实现 `FrenchReader.tsx` 双栏布局（PDF + 侧栏占位） | Tool 主组件 | 4h | [x] |
+| TASK-M103 | `useFrenchReaderOperation.ts`（ToolType.custom） | operation hook | 3h | [x] |
+| TASK-M104 | 注册 Tool：`useTranslatedToolRegistry.tsx` + 分类/图标 | 工具可见 | 2h | [x] |
+| TASK-M105 | i18n：`en` / `zh` 工具名与描述 | translation.json | 2h | [x] |
+| TASK-M106 | FileContext 集成：读取当前 PDF，展示首页 | 无需重传 | 4h | [x] |
+| TASK-M107 | 翻页、页码、缩放（复用或包装现有 viewer） | 阅读交互 | 6h | [x] |
 | TASK-M108 | 冒烟：Merge/Split/OCR 三个 Stirling 原生 Tool 仍正常 | 回归清单 | 2h | [ ] |
 
 **M1 完成定义**：Stirling 内打开 French Reader，能阅读已加载 PDF。

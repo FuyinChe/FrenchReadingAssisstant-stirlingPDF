@@ -1,10 +1,12 @@
-import type { ToolOperationConfig } from "@app/hooks/tools/shared/toolOperationTypes";
-import { ToolType } from "@app/hooks/tools/shared/toolOperationTypes";
+import {
+  ToolType,
+  type ToolOperationConfig,
+} from "@app/hooks/tools/shared/toolOperationTypes";
 
-/** M0 placeholder — custom operation wired in M1. */
-export const frenchReaderOperationConfig: ToolOperationConfig<Record<string, never>> = {
+/** Viewer-only tool — no batch PDF processing in M1. */
+export const frenchReaderOperationConfig: ToolOperationConfig<
+  Record<string, never>
+> = {
   toolType: ToolType.custom,
-  customProcessor: async () => {
-    throw new Error("French Reader operation not implemented yet (M1).");
-  },
+  customProcessor: async () => ({ files: [] }),
 };

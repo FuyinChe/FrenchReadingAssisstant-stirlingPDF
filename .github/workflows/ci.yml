@@ -41,5 +41,5 @@ jobs:
         run: |
           chmod +x scripts/*.sh
           FRENCH_READER_ENABLED=true ./scripts/install-extensions.sh
-          test -f stirling-upstream/frontend/editor/src/tools/frenchReader/FrenchReader.tsx
+          test -f stirling-upstream/frontend/editor/src/core/tools/frenchReader/FrenchReader.tsx
           test -f .extensions-installed

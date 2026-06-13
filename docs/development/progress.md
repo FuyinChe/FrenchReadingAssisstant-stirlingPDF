@@ -6,19 +6,19 @@
 
 | 项 | 值 |
 |----|-----|
-| 当前阶段 | **M0 — 基本完成，待 Stirling dev 验证** |
+| 当前阶段 | **M1 完成 → M2 区域 OCR 待开始** |
 | 基座策略 | **Stirling PDF Fork + 插件扩展** |
-| 当前 Sprint | Sprint 1 准备 |
+| 当前 Sprint | Sprint 2 准备 |
 | 最后更新 | 2026-06-13 |
-| 阻塞项 | 本地需 JDK 25 + Task + uv 以跑满 Stirling `task dev` |
+| 阻塞项 | 无 |
 
 ## 里程碑进度
 
 | 里程碑 | 状态 | 完成日期 | 备注 |
 |--------|------|----------|------|
-| M0 Stirling 基座与扩展骨架 | 🟡 进行中 | — | submodule + extensions + scripts + CI |
-| M1 French Reader Tool 壳 | ⬜ 未开始 | — | |
-| M2 区域 OCR + 侧栏 | ⬜ 未开始 | — | |
+| M0 Stirling 基座与扩展骨架 | ✅ 完成 | 2026-06-13 | |
+| M1 French Reader Tool 壳 | ✅ 完成 | 2026-06-13 | Viewer + 侧栏助手 |
+| M2 区域 OCR + 侧栏 | ⬜ 未开始 | — | 下一步 |
 | M3 TTS | ⬜ 未开始 | — | MVP 截止 |
 | M4 AI 增强 | ⬜ 未开始 | — | |
 | M5 漫画气泡 | ⬜ 未开始 | — | |
@@ -30,7 +30,7 @@
 
 | ID | 负责人 | 开始日期 | 备注 |
 |----|--------|----------|------|
-| TASK-M002 | — | 2026-06-13 | 需本机 `task install && task dev` 验证 |
+| TASK-M108 | — | — | 可选：Merge/Split/OCR 冒烟回归 |
 
 ---
 
@@ -38,36 +38,31 @@
 
 | ID | 完成日期 | 备注 |
 |----|----------|------|
-| TASK-M001 | 2026-06-13 | stirling-upstream submodule |
-| TASK-M003 | 2026-06-13 | docs/plan/07-license-compliance.md |
-| TASK-M004 | 2026-06-13 | extensions/french-reader-engine |
-| TASK-M005 | 2026-06-13 | extensions/french-reader-frontend |
-| TASK-M006 | 2026-06-13 | scripts/install-extensions.sh |
-| TASK-M007 | 2026-06-13 | scripts/sync-upstream.sh + dev.sh |
-| TASK-M008 | 2026-06-13 | sidecar engine :5002（不修改 Stirling engine 核心） |
-| TASK-M009 | 2026-06-13 | FRENCH_READER_ENABLED / VITE_FRENCH_READER_ENABLED |
-| TASK-M010 | 2026-06-13 | .github/workflows/ci.yml |
-| — | 2026-06-13 | docs/dev-setup.md |
+| TASK-M107 | 2026-06-13 | ViewerControls：页码 + 缩放 |
+| TASK-M106 | 2026-06-13 | FileContext + auto viewer |
+| TASK-M102–M105 | 2026-06-13 | FrenchReader + registry + i18n defaults |
+| TASK-M101 | 2026-06-13 | docs/plan/08-viewer-integration-notes.md |
+| TASK-M002 | 2026-06-13 | 用户确认 dev 启动成功 |
+| TASK-M001 | 2026-06-13 | submodule |
+| TASK-M003–M010 | 2026-06-13 | M0 骨架 |
 
 ---
 
 ## Sprint 日志
 
-### Sprint 0（M0 骨架）— 2026-06-13
+### Sprint 1（M0 + M1）— 2026-06-13
 
 **完成**：
 
-- [x] Stirling submodule
-- [x] extensions 引擎 + 前端骨架
-- [x] install / sync / dev 脚本
-- [x] 前端 Tool 注册 patch（prototypeToolId + usePrototypeToolRegistry）
-- [x] engine 侧car + pytest 2 passed
-- [x] CI workflow
-- [x] 许可证合规文档
+- [x] M0：submodule、extensions、scripts、CI
+- [x] M1：EmbedPDF viewer 集成、AiSidePanel、页码/缩放控制
+- [x] 用户验证：`./scripts/dev.sh` 可启动 French Reader
 
-**待办**：
+**下步（M2）**：
 
-- [ ] TASK-M002：本机验证 Stirling `task dev` + French Reader Tool 出现在 UI
+- [ ] RegionSelector overlay
+- [ ] engine `POST /french-reader/ocr/region`
+- [ ] 侧栏展示 OCR 文本
 
 ---
 
@@ -75,4 +70,5 @@
 
 | 日期 | 变更 |
 |------|------|
-| 2026-06-13 | M0 骨架落地；engine 采用 sidecar 避免修改 Stirling engine 专有代码 |
+| 2026-06-13 | M1：viewer 模式 + Reading assistant 侧栏 |
+| 2026-06-13 | M0 骨架；engine sidecar |
