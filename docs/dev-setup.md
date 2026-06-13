@@ -55,6 +55,11 @@ task dev
 | `VITE_FRENCH_READER_ENABLED` | 同左 | 前端构建/ dev 时隐藏 Tool |
 | `FRENCH_READER_PORT` | `5002` | sidecar 端口（代码中 config.py 默认 5002） |
 | `FRENCH_READER_CORS_ORIGINS` | `http://localhost:5173,...` | CORS |
+| `FRENCH_READER_TTS_MAX_CHARS` | `5000` | TTS 单次文本上限 |
+| `FRENCH_READER_LLM_API_KEY` | — | LLM API Key（未设则用 `OPENAI_API_KEY`） |
+| `FRENCH_READER_LLM_BASE_URL` | `https://api.openai.com/v1` | OpenAI 兼容端点 |
+| `FRENCH_READER_LLM_MODEL` | `gpt-4o-mini` | 模型名 |
+| `FRENCH_READER_AI_MAX_CHARS` | `5000` | AI 单次文本上限 |
 
 关闭扩展：
 
@@ -94,6 +99,56 @@ curl http://localhost:5002/french-reader/ocr/engines
 ```bash
 cd extensions/french-reader-engine && uv sync --dev --extra ocr-paddle
 ```
+
+### TTS 朗读（M3+）
+
+需要 **网络**（edge-tts 调用 Microsoft Edge 在线语音）：
+
+```bash
+curl 'http://localhost:5002/french-reader/tts/voices?lang=fr'
+curl -X POST http://localhost:5002/french-reader/tts/synthesize \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"Bonjour!","voice":"fr-FR-DeniseNeural","rate":"+0%"}' \
+  --output /tmp/french-tts.mp3
+```
+
+侧栏：OCR 完成后选择法语音色 → **Read aloud**（按 OCR 分句逐句朗读）。
+
+### AI 翻译（M4+）
+
+在项目根目录配置 **`.env`**（已 gitignore，勿提交密钥）：
+
+```bash
+cp .env.example .env
+# 编辑 .env，填入 Kimi API Key
+```
+
+`.env` 示例（Kimi / Moonshot，香港可用 `api.moonshot.ai`）：
+
+```bash
+FRENCH_READER_LLM_API_KEY=sk-...
+FRENCH_READER_LLM_BASE_URL=https://api.moonshot.ai/v1
+FRENCH_READER_LLM_MODEL=moonshot-v1-32k
+```
+
+`./scripts/dev.sh` 启动时会自动 `source .env`。也可手动：
+
+```bash
+export FRENCH_READER_LLM_API_KEY=sk-...
+export FRENCH_READER_LLM_BASE_URL=https://api.moonshot.ai/v1
+export FRENCH_READER_LLM_MODEL=moonshot-v1-32k
+./scripts/dev.sh
+```
+
+检查：
+
+```bash
+curl http://localhost:5002/french-reader/ai/status
+```
+
+侧栏 **Translation & notes**：模式 Translate / Vocabulary / Grammar，流式输出；无 Key 时显示黄色降级提示。
+
+详见 [09-llm-integration-notes.md](plan/09-llm-integration-notes.md)。
 
 Stirling 全量检查（耗时，可选）：
 

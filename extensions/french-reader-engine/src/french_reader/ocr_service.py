@@ -103,12 +103,8 @@ def _assemble_tesseract_lines(data: dict) -> list[tuple[str, float]]:
         assembled.append((line_text, avg_conf, (block, par)))
 
     lines: list[tuple[str, float]] = []
-    prev_par: tuple[int, int] | None = None
-    for line_text, avg_conf, par_key in assembled:
-        if prev_par is not None and par_key != prev_par:
-            lines.append(("", 0.0))
+    for line_text, avg_conf, _par_key in assembled:
         lines.append((line_text, avg_conf))
-        prev_par = par_key
     return lines
 
 

@@ -1,5 +1,11 @@
 # FrenchPdfReader
 
+# Local secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
 # Stirling submodule (large)
 stirling-upstream/
 

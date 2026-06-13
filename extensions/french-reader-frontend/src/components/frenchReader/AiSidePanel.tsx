@@ -1,32 +1,30 @@
 import {
   Alert,
-  Button,
-  CopyButton,
   Divider,
+  Group,
   Loader,
   Paper,
   Stack,
   Text,
-  Textarea,
-  Title,
-  Tooltip,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { isStirlingFile } from "@app/types/fileContext";
 import type { StirlingFile } from "@app/types/fileContext";
-import { FrenchReaderViewerControls } from "@app/components/frenchReader/FrenchReaderViewerControls";
+import { AiTranslationControls } from "@app/components/frenchReader/AiTranslationControls";
+import { CopyHoverPanel } from "@app/components/frenchReader/CopyHoverPanel";
+import { OcrHistoryPanel } from "@app/components/frenchReader/OcrHistoryPanel";
+import { OcrTextBlock } from "@app/components/frenchReader/OcrTextBlock";
+import { FrenchReaderSettingsButton } from "@app/components/frenchReader/FrenchReaderSettingsButton";
 import { useFrenchReaderContext } from "@app/contexts/FrenchReaderContext";
-import type { FrenchReaderPageState } from "@app/hooks/tools/frenchReader/useFrenchReaderPageState";
 
 interface AiSidePanelProps {
   activeFile: StirlingFile | null;
-  pageState: FrenchReaderPageState;
 }
 
-export function AiSidePanel({ activeFile, pageState }: AiSidePanelProps) {
+export function AiSidePanel({ activeFile }: AiSidePanelProps) {
   const { t } = useTranslation();
-  const { ocrResult, ocrLoading, ocrError, clearOcr } = useFrenchReaderContext();
+  const { ocrResult, ocrLoading, ocrError, clearOcr, ttsError } =
+    useFrenchReaderContext();
 
   const fileLabel =
     activeFile && isStirlingFile(activeFile)
@@ -35,30 +33,20 @@ export function AiSidePanel({ activeFile, pageState }: AiSidePanelProps) {
 
   return (
     <Stack gap="md">
-      <Stack gap={4}>
-        <Title order={5}>{t("frenchReader.panel.title", "Reading assistant")}</Title>
-        <Text size="sm" c="dimmed" lineClamp={2}>
-          {fileLabel}
+      <Group justify="space-between" align="center" wrap="nowrap">
+        <Text size="xs" c="dimmed" style={{ flex: 1 }}>
+          {t(
+            "frenchReader.panel.selectHint",
+            "Drag a rectangle on the current PDF page to extract French text.",
+          )}
         </Text>
-      </Stack>
-
-      <FrenchReaderViewerControls pageState={pageState} />
-
-      <Text size="xs" c="dimmed">
-        {t(
-          "frenchReader.panel.selectHint",
-          "Drag a rectangle on the current PDF page to extract French text.",
-        )}
-      </Text>
+        <FrenchReaderSettingsButton />
+      </Group>
 
       <Divider />
 
       <Paper withBorder p="sm" radius="md" bg="var(--bg-muted, var(--mantine-color-gray-0))">
-        <Stack gap="xs">
-          <Text size="sm" fw={500}>
-            {t("frenchReader.panel.ocrTitle", "Extracted text")}
-          </Text>
-
+        <Stack gap="sm">
           {ocrLoading && (
             <Stack gap="xs" align="center" py="sm">
               <Loader size="sm" />
@@ -76,18 +64,20 @@ export function AiSidePanel({ activeFile, pageState }: AiSidePanelProps) {
 
           {!ocrLoading && !ocrError && ocrResult && (
             <>
-              <Text size="xs" c="dimmed">
-                {t("frenchReader.panel.confidence", "Confidence")}:{" "}
-                {(ocrResult.confidence * 100).toFixed(1)}%
-              </Text>
-              <Textarea
-                value={ocrResult.text}
-                readOnly
-                autosize
-                minRows={3}
-                maxRows={10}
-              />
-              <GroupActions text={ocrResult.text} onClear={clearOcr} t={t} />
+              <CopyHoverPanel
+                copyValue={ocrResult.text}
+                copyTooltip={t("frenchReader.panel.copyFrench", "Copy French")}
+                copiedTooltip={t("frenchReader.panel.copied", "Copied")}
+                onClear={clearOcr}
+                clearTooltip={t("frenchReader.panel.clear", "Clear selection")}
+              >
+                <OcrTextBlock
+                  text={ocrResult.text}
+                  lines={ocrResult.lines}
+                  confidence={ocrResult.confidence}
+                />
+              </CopyHoverPanel>
+              <AiTranslationControls text={ocrResult.text} />
             </>
           )}
 
@@ -99,56 +89,16 @@ export function AiSidePanel({ activeFile, pageState }: AiSidePanelProps) {
               )}
             </Text>
           )}
+
+          {ttsError && (
+            <Alert color="red" variant="light" title={t("frenchReader.tts.error", "TTS failed")}>
+              {ttsError}
+            </Alert>
+          )}
         </Stack>
       </Paper>
 
-      <Paper withBorder p="sm" radius="md">
-        <Stack gap="xs">
-          <Text size="sm" fw={500}>
-            {t("frenchReader.panel.ttsPlaceholder", "Pronunciation")}
-          </Text>
-          <Text size="sm" c="dimmed">
-            {t(
-              "frenchReader.panel.ttsHint",
-              "TTS playback will appear here after OCR (M3).",
-            )}
-          </Text>
-        </Stack>
-      </Paper>
-    </Stack>
-  );
-}
-
-function GroupActions({
-  text,
-  onClear,
-  t,
-}: {
-  text: string;
-  onClear: () => void;
-  t: (key: string, defaultValue: string) => string;
-}) {
-  return (
-    <Stack gap="xs">
-      <CopyButton value={text}>
-        {({ copied, copy }) => (
-          <Tooltip label={copied ? t("frenchReader.panel.copied", "Copied") : t("frenchReader.panel.copy", "Copy")}>
-            <Button
-              variant="light"
-              size="xs"
-              leftSection={<ContentCopyIcon sx={{ fontSize: 16 }} />}
-              onClick={copy}
-            >
-              {copied
-                ? t("frenchReader.panel.copied", "Copied")
-                : t("frenchReader.panel.copy", "Copy text")}
-            </Button>
-          </Tooltip>
-        )}
-      </CopyButton>
-      <Button variant="subtle" size="xs" onClick={onClear}>
-        {t("frenchReader.panel.clear", "Clear selection")}
-      </Button>
+      <OcrHistoryPanel sourceFileName={fileLabel} />
     </Stack>
   );
 }

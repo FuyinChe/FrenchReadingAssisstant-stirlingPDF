@@ -12,6 +12,9 @@ dependencies = [
     "pillow>=10.0.0",
     "numpy>=1.26.0",
     "pytesseract>=0.3.10",
+    "edge-tts>=6.1.0",
+    "httpx>=0.27.0",
+    "reportlab>=4.0.0",
 ]
 
 [project.optional-dependencies]
@@ -35,6 +38,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/french_reader"]
+force-include = { "src/french_reader/assets" = "french_reader/assets" }
 
 [tool.ruff]
 line-length = 100

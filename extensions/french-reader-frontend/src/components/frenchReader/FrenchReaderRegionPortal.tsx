@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { isStirlingFile } from "@app/types/fileContext";
 import { RegionSelector } from "@app/components/frenchReader/RegionSelector";
 import { useFrenchReaderContext } from "@app/contexts/FrenchReaderContext";
 import { cropPageRegionToBase64 } from "@app/services/cropPageRegion";
@@ -25,6 +26,7 @@ export function FrenchReaderRegionPortal({
     setOcrLoading,
     setOcrResult,
     setOcrError,
+    recordOcrResult,
   } = useFrenchReaderContext();
 
   useEffect(() => {
@@ -68,6 +70,14 @@ export function FrenchReaderRegionPortal({
       );
       const result = await ocrRegion(imageBase64, selection);
       setOcrResult(result);
+      recordOcrResult({
+        fileName:
+          activeFile && isStirlingFile(activeFile)
+            ? activeFile.name
+            : "document.pdf",
+        page: pageNumber,
+        result,
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "OCR failed unexpectedly";

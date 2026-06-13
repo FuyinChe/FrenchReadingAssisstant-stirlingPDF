@@ -1,9 +1,11 @@
 import re
 
+from french_reader.ocr_corrections import apply_ocr_corrections
+
 _FRENCH_PUNCT_ONLY = re.compile(r"^[:;?!…]+$")
 _FRENCH_CLOSING_PUNCT = re.compile(r"^[,.\»\)\]!?…]+")
 _SENTENCE_BOUNDARY = re.compile(
-    r"(?<=[.!?…»\"])\s+(?=[A-ZÀÂÄÉÈÊËÏÎÔÙÛÜŸÇ«\"0-9])"
+    r"(?<=[.!?…»\"])\s+(?=[A-ZÀÂÄÉÈÊËÏÎÔÙÛÜŸÇ«\"0-9Il])"
 )
 _ABBREV_BEFORE_PERIOD = re.compile(
     r"\b(?:M|Mme|Dr|Mlle|etc|vol|p|pp|art|cf|ex|fig)\.\s*$",
@@ -22,13 +24,11 @@ def _attach_to_previous(previous: str, fragment: str) -> str:
 
 
 def _merge_visual_lines(raw_lines: list[str]) -> list[str]:
-    """Merge OCR/page line breaks; keep only explicit paragraph markers."""
+    """Merge OCR/page line breaks into one continuous flow."""
     merged: list[str] = []
     for raw in raw_lines:
         line = raw.strip()
         if not line:
-            if merged and merged[-1] != "":
-                merged.append("")
             continue
 
         if merged and merged[-1].endswith("-"):
@@ -45,21 +45,6 @@ def _merge_visual_lines(raw_lines: list[str]) -> list[str]:
 
         merged.append(line)
     return merged
-
-
-def _paragraphs_from_merged(merged: list[str]) -> list[str]:
-    paragraphs: list[str] = []
-    current: list[str] = []
-    for line in merged:
-        if line == "":
-            if current:
-                paragraphs.append(" ".join(current))
-                current = []
-            continue
-        current.append(line)
-    if current:
-        paragraphs.append(" ".join(current))
-    return paragraphs
 
 
 def _split_french_sentences(paragraph: str) -> list[str]:
@@ -105,22 +90,17 @@ def postprocess_french_text(text: str) -> str:
     """
     Normalize OCR output for reading and TTS.
 
-    - Ignores page/visual line wraps (joins with spaces).
-    - Inserts line breaks at sentence-ending punctuation (. ! ? …).
-    - Keeps paragraph breaks (blank lines / separate OCR blocks) as blank lines.
+    A cropped speech-bubble region is treated as one flowing utterance:
+    - All visual / Tesseract paragraph wraps are joined with spaces.
+    - Line breaks appear only between sentences (. ! ? …) for TTS pauses.
     """
     if not text:
         return ""
 
     merged = _merge_visual_lines(text.splitlines())
-    paragraphs = _paragraphs_from_merged(merged)
-
-    formatted_paragraphs: list[str] = []
-    for paragraph in paragraphs:
-        sentences = _split_french_sentences(paragraph)
-        formatted_paragraphs.append("\n".join(_apply_french_typography(s) for s in sentences))
-
-    return "\n\n".join(formatted_paragraphs)
+    flowing = apply_ocr_corrections(" ".join(merged))
+    sentences = _split_french_sentences(flowing)
+    return "\n".join(_apply_french_typography(sentence) for sentence in sentences)
 
 
 def extract_tts_lines(text: str) -> list[str]:

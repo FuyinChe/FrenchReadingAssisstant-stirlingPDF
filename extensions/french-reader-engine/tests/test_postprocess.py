@@ -1,3 +1,4 @@
+from french_reader.ocr_corrections import apply_ocr_corrections
 from french_reader.ocr_service import _assemble_tesseract_lines
 from french_reader.text_postprocess import extract_tts_lines, postprocess_french_text
 
@@ -49,9 +50,26 @@ def test_visual_wraps_do_not_break_sentences():
     )
 
 
-def test_paragraph_breaks_preserved():
+def test_comma_clause_not_split_by_tesseract_paragraph():
+    raw = "\n".join(
+        [
+            "Papa rassure Alice :",
+            "papi n'aura plus soif,",
+            "ni faim,",
+            "ni froid, ni chaud, ni mal.",
+        ]
+    )
+    result = postprocess_french_text(raw)
+    assert "ni faim,\n" not in result
+    assert "ni faim, ni froid" in result
+    assert result == (
+        "Papa rassure Alice : papi n'aura plus soif, ni faim, ni froid, ni chaud, ni mal."
+    )
+
+
+def test_two_sentences_stay_on_separate_tts_lines():
     assert postprocess_french_text("Première bulle.\n\nDeuxième bulle.") == (
-        "Première bulle.\n\nDeuxième bulle."
+        "Première bulle.\nDeuxième bulle."
     )
 
 
@@ -75,6 +93,18 @@ def test_long_speech_bubble_splits_by_sentence_for_tts():
         "Il est mort, c'est tout.",
     ]
     assert extract_tts_lines(result) == result.split("\n")
+
+
+def test_il_pipe_misread_corrected():
+    raw = "Le corps de papi ne sent plus rien, ni les bobos, ni les câlins. || est mort, c'est tout."
+    assert postprocess_french_text(raw) == (
+        "Le corps de papi ne sent plus rien, ni les bobos, ni les câlins.\n"
+        "Il est mort, c'est tout."
+    )
+
+
+def test_apply_ocr_corrections_il():
+    assert apply_ocr_corrections("câlins. || est mort") == "câlins. Il est mort"
 
 
 def test_assemble_tesseract_groups_words_by_line():

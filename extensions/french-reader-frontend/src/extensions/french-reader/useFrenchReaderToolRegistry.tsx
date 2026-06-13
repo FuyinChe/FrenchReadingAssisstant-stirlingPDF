@@ -34,13 +34,13 @@ export function useFrenchReaderToolRegistry(): PrototypeToolRegistry {
             height="1.5rem"
           />
         ),
-        name: t("home.frenchReader.title", "French Reader"),
+        name: t("home.frenchReader.title", "French Reading Assistant"),
         component: FrenchReader,
         description: t(
           "home.frenchReader.desc",
           "Select French text regions in PDFs for OCR, TTS, and AI assistance",
         ),
-        categoryId: ToolCategoryId.ADVANCED_TOOLS,
+        categoryId: ToolCategoryId.RECOMMENDED_TOOLS,
         subcategoryId: SubcategoryId.DOCUMENT_REVIEW,
         maxFiles: 1,
         workbench: "viewer",
@@ -49,7 +49,7 @@ export function useFrenchReaderToolRegistry(): PrototypeToolRegistry {
         automationSettings: null,
         supportsAutomate: false,
         synonyms: getSynonyms(t, "frenchReader"),
-        versionStatus: "beta",
+        versionStatus: "alpha",
       },
     } as PrototypeToolRegistry;
   }, [t]);

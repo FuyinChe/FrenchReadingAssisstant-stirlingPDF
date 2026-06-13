@@ -80,12 +80,10 @@ function FrenchReaderInner(_props: BaseToolProps) {
       {
         title: t("frenchReader.panel.title", "Reading assistant"),
         isCollapsed: false,
-        content: (
-          <AiSidePanel activeFile={activeFile} pageState={pageState} />
-        ),
+        content: <AiSidePanel activeFile={activeFile} />,
       },
     ];
-  }, [hasFiles, isFrenchReaderActive, activeFile, pageState, t]);
+  }, [hasFiles, isFrenchReaderActive, activeFile, t]);
 
   return (
     <>
@@ -97,7 +95,7 @@ function FrenchReaderInner(_props: BaseToolProps) {
       )}
       {createToolFlow({
         title: {
-          title: t("frenchReader.title", "French Reader"),
+          title: t("frenchReader.title", "French Reading Assistant"),
           description: t(
             "frenchReader.subtitle",
             "Read French PDFs with OCR and TTS assistance",
@@ -105,7 +103,7 @@ function FrenchReaderInner(_props: BaseToolProps) {
         },
         files: {
           selectedFiles: activeFile ? [activeFile] : [],
-          isCollapsed: false,
+          isVisible: false,
           minFiles: 1,
         },
         steps,

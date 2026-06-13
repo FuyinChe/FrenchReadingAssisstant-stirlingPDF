@@ -13,6 +13,14 @@ export FRENCH_READER_ENABLED="${ENABLED}"
 log() { printf '[dev] %s\n' "$*"; }
 die() { log "ERROR: $*"; exit 1; }
 
+if [[ -f "${ROOT}/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "${ROOT}/.env"
+  set +a
+  log "Loaded environment from ${ROOT}/.env"
+fi
+
 install_engine_deps() {
   cd "${ENGINE_EXT}"
   if command -v uv >/dev/null 2>&1; then

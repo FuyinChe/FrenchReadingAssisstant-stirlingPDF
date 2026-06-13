@@ -23,6 +23,7 @@ mkdir -p "${FE_CORE}/hooks/tools/frenchReader"
 mkdir -p "${FE_CORE}/components/frenchReader"
 mkdir -p "${FE_CORE}/contexts"
 mkdir -p "${FE_CORE}/services"
+mkdir -p "${FE_CORE}/utils"
 mkdir -p "${FE_CORE}/extensions/french-reader"
 
 cp "${EXT_FRONTEND}/src/tools/FrenchReader.tsx" "${FE_CORE}/tools/frenchReader/FrenchReader.tsx"
@@ -30,6 +31,7 @@ cp "${EXT_FRONTEND}/src/hooks/tools/frenchReader/"*.ts "${FE_CORE}/hooks/tools/f
 cp "${EXT_FRONTEND}/src/components/frenchReader/"*.tsx "${FE_CORE}/components/frenchReader/"
 cp "${EXT_FRONTEND}/src/contexts/FrenchReaderContext.tsx" "${FE_CORE}/contexts/FrenchReaderContext.tsx"
 cp "${EXT_FRONTEND}/src/services/"*.ts "${FE_CORE}/services/"
+cp "${EXT_FRONTEND}/src/utils/"*.ts "${FE_CORE}/utils/"
 cp "${EXT_FRONTEND}/src/extensions/french-reader/useFrenchReaderToolRegistry.tsx" \
   "${FE_CORE}/extensions/french-reader/useFrenchReaderToolRegistry.tsx"
 

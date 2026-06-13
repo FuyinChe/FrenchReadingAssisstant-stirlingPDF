@@ -67,12 +67,12 @@
 
 | ID | 任务 | 产出 | 估时 | 状态 |
 |----|------|------|------|------|
-| TASK-M301 | engine：`tts_service.py` + edge-tts | TTS 服务 | 3h | [ ] |
-| TASK-M302 | `POST /french-reader/tts/synthesize` | API | 2h | [ ] |
-| TASK-M303 | `GET /french-reader/tts/voices?lang=fr` | 音色列表 | 2h | [ ] |
-| TASK-M304 | 侧栏 `TtsPlayer`：播放/停止/音色 | UI | 4h | [ ] |
+| TASK-M301 | engine：`tts_service.py` + edge-tts | TTS 服务 | 3h | [x] |
+| TASK-M302 | `POST /french-reader/tts/synthesize` | API | 2h | [x] |
+| TASK-M303 | `GET /french-reader/tts/voices?lang=fr` | 音色列表 | 2h | [x] |
+| TASK-M304 | 侧栏 `TtsPlayer`：播放/停止/音色 | UI | 4h | [x] |
 | TASK-M305 | Java 代理 TTS 端点（若 M210 已做则复用模式） | 生产端口 | 2h | [ ] |
-| TASK-M306 | 错误处理与文本长度限制 | 健壮性 | 2h | [ ] |
+| TASK-M306 | 错误处理与文本长度限制 | 健壮性 | 2h | [x] |
 
 **M3 完成定义**：OCR 文本一键法语朗读（**MVP 发布**）。
 
@@ -82,11 +82,11 @@
 
 | ID | 任务 | 产出 | 估时 | 状态 |
 |----|------|------|------|------|
-| TASK-M401 | 调研 Stirling engine 现有 LLM 配置方式 | 笔记 | 2h | [ ] |
-| TASK-M402 | `POST /french-reader/ai/explain` + SSE | API | 4h | [ ] |
-| TASK-M403 | 翻译 / 词汇释义 prompt 模板 | prompts/ | 3h | [ ] |
-| TASK-M404 | 侧栏 AI 区块流式渲染 | UI | 4h | [ ] |
-| TASK-M405 | 无 LLM 配置时的降级 UI | 降级 | 2h | [ ] |
+| TASK-M401 | 调研 Stirling engine 现有 LLM 配置方式 | 笔记 | 2h | [x] |
+| TASK-M402 | `POST /french-reader/ai/explain` + SSE | API | 4h | [x] |
+| TASK-M403 | 翻译 / 词汇释义 prompt 模板 | prompts/ | 3h | [x] |
+| TASK-M404 | 侧栏 AI 区块流式渲染 | UI | 4h | [x] |
+| TASK-M405 | 无 LLM 配置时的降级 UI | 降级 | 2h | [x] |
 
 ---
 
