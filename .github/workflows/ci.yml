@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+
+jobs:
+  french-reader-engine:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extensions/french-reader-engine
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Ruff
+        run: uv run ruff check src tests
+
+      - name: Pytest
+        run: uv run pytest -q
+
+  extensions-install-dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Verify install script
+        run: |
+          chmod +x scripts/*.sh
+          FRENCH_READER_ENABLED=true ./scripts/install-extensions.sh
+          test -f stirling-upstream/frontend/editor/src/tools/frenchReader/FrenchReader.tsx
+          test -f .extensions-installed
