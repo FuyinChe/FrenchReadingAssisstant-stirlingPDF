@@ -10,7 +10,7 @@ export function useBubbleDetection() {
   const [bubbleDetectError, setBubbleDetectError] = useState<string | null>(null);
   const [bubblePreprocess, setBubblePreprocess] = useState(false);
   const [bubbleDetectorReady, setBubbleDetectorReady] = useState<boolean | null>(null);
-  const [lastDetector, setLastDetector] = useState<string | null>(null);
+  const [lastBubbleDetector, setLastBubbleDetector] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,7 +50,7 @@ export function useBubbleDetection() {
 
   const clearAllBubbles = useCallback(() => {
     setBubblesByPage({});
-    setLastDetector(null);
+    setLastBubbleDetector(null);
   }, []);
 
   const detectBubblesForPage = useCallback(
@@ -70,7 +70,7 @@ export function useBubbleDetection() {
           preprocess: bubblePreprocess,
         });
         setBubblesForPage(params.pageNumber, response.bubbles);
-        setLastDetector(response.detector);
+        setLastBubbleDetector(response.detector);
         return response;
       } catch (error) {
         const message =
@@ -96,6 +96,6 @@ export function useBubbleDetection() {
     bubblePreprocess,
     setBubblePreprocess,
     bubbleDetectorReady,
-    lastDetector,
+    lastBubbleDetector,
   };
 }

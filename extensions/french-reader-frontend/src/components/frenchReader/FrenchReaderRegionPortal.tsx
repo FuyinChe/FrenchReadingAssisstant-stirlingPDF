@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 
 import { isStirlingFile } from "@app/types/fileContext";
 import { BubbleOverlay } from "@app/components/frenchReader/BubbleOverlay";
+import { ParagraphOverlay } from "@app/components/frenchReader/ParagraphOverlay";
 import { RegionSelector } from "@app/components/frenchReader/RegionSelector";
 import { useFrenchReaderContext } from "@app/contexts/FrenchReaderContext";
 import { useFrenchReaderOcr } from "@app/hooks/tools/frenchReader/useFrenchReaderOcr";
@@ -26,9 +27,11 @@ export function FrenchReaderRegionPortal({
     selection,
     ocrLoading,
     getBubblesForPage,
+    getParagraphsForPage,
   } = useFrenchReaderContext();
 
   const bubbles = getBubblesForPage(pageNumber);
+  const paragraphs = getParagraphsForPage(pageNumber);
 
   useEffect(() => {
     const page = document.querySelector(
@@ -51,24 +54,7 @@ export function FrenchReaderRegionPortal({
     };
   }, [pageIndex, pageNumber]);
 
-  const handleRegionComplete = async (bbox: NormalizedBBox) => {
-    if (!activeFile) {
-      return;
-    }
-
-    await runOcr({
-      file: activeFile,
-      fileName:
-        activeFile && isStirlingFile(activeFile)
-          ? activeFile.name
-          : "document.pdf",
-      pageNumber,
-      pageIndex,
-      bbox,
-    });
-  };
-
-  const handleBubbleClick = async (bbox: NormalizedBBox) => {
+  const runRegionOcr = async (bbox: NormalizedBBox) => {
     if (!activeFile || ocrLoading) {
       return;
     }
@@ -91,12 +77,18 @@ export function FrenchReaderRegionPortal({
 
   return createPortal(
     <>
-      <RegionSelector pageIndex={pageIndex} onComplete={handleRegionComplete} />
+      <RegionSelector pageIndex={pageIndex} onComplete={runRegionOcr} />
+      <ParagraphOverlay
+        paragraphs={paragraphs}
+        activeBbox={selection?.page === pageNumber ? selection.bbox : null}
+        disabled={ocrLoading}
+        onParagraphClick={runRegionOcr}
+      />
       <BubbleOverlay
         bubbles={bubbles}
         activeBbox={selection?.page === pageNumber ? selection.bbox : null}
         disabled={ocrLoading}
-        onBubbleClick={handleBubbleClick}
+        onBubbleClick={runRegionOcr}
       />
     </>,
     mountNode,

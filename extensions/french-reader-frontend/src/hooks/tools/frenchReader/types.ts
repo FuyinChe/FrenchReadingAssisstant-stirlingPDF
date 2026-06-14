@@ -69,3 +69,23 @@ export interface BubbleDetectorStatusResponse {
   detail: string;
   default_model: string;
 }
+
+export interface DetectedParagraph {
+  bbox: NormalizedBBox;
+  confidence: number;
+  detector: string;
+  order: number;
+}
+
+export interface AutoParagraphsResponse {
+  page: number;
+  paragraphs: DetectedParagraph[];
+  detector: string;
+  preprocess: boolean;
+}
+
+export interface ParagraphDetectorStatusResponse {
+  ready: boolean;
+  opencv_available: boolean;
+  detail: string;
+}

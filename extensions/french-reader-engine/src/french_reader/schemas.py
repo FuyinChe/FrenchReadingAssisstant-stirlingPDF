@@ -101,3 +101,24 @@ class AutoBubblesResponse(BaseModel):
     bubbles: list[DetectedBubble] = Field(default_factory=list)
     detector: str
     preprocess: bool = False
+
+
+class AutoParagraphsRequest(BaseModel):
+    image_base64: str = Field(min_length=16)
+    page: int = Field(ge=1)
+    confidence_threshold: float = Field(default=0.35, ge=0.05, le=0.95)
+    preprocess: bool = False
+
+
+class DetectedParagraph(BaseModel):
+    bbox: BBox
+    confidence: float = Field(ge=0, le=1)
+    detector: str
+    order: int = Field(ge=1)
+
+
+class AutoParagraphsResponse(BaseModel):
+    page: int = Field(ge=1)
+    paragraphs: list[DetectedParagraph] = Field(default_factory=list)
+    detector: str
+    preprocess: bool = False

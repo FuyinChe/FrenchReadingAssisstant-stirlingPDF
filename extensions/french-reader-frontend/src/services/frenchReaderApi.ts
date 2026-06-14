@@ -3,9 +3,11 @@ import type {
   AiExplainMode,
   AiStatusResponse,
   AutoBubblesResponse,
+  AutoParagraphsResponse,
   BubbleDetectorStatusResponse,
   FrenchReaderSelection,
   OcrResult,
+  ParagraphDetectorStatusResponse,
   TtsRate,
   TtsVoicesResponse,
 } from "@app/hooks/tools/frenchReader/types";
@@ -89,6 +91,38 @@ export async function detectAutoBubbles(params: {
   }
 
   return (await response.json()) as AutoBubblesResponse;
+}
+
+export async function fetchParagraphDetectorStatus(): Promise<ParagraphDetectorStatusResponse> {
+  const response = await fetch(`${API_BASE}/ocr/paragraphs/status`);
+  if (!response.ok) {
+    throw new Error(await readErrorDetail(response));
+  }
+  return (await response.json()) as ParagraphDetectorStatusResponse;
+}
+
+export async function detectAutoParagraphs(params: {
+  imageBase64: string;
+  page: number;
+  confidenceThreshold?: number;
+  preprocess?: boolean;
+}): Promise<AutoParagraphsResponse> {
+  const response = await fetch(`${API_BASE}/ocr/auto-paragraphs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      image_base64: params.imageBase64,
+      page: params.page,
+      confidence_threshold: params.confidenceThreshold ?? 0.35,
+      preprocess: params.preprocess ?? false,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorDetail(response));
+  }
+
+  return (await response.json()) as AutoParagraphsResponse;
 }
 
 export async function fetchTtsVoices(lang = "fr"): Promise<TtsVoicesResponse> {

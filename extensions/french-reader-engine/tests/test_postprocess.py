@@ -103,6 +103,27 @@ def test_il_pipe_misread_corrected():
     )
 
 
+def test_ellipsis_continuation_merges_into_one_paragraph():
+    raw = "\n".join(
+        [
+            "Hippolyte, il faut bien penser à débrancher les appareils électriques avant de les laver...",
+            "... et toujours demander à un adulte de te surveiller avant d'utiliser le four",
+        ]
+    )
+    assert postprocess_french_text(raw) == (
+        "Hippolyte, il faut bien penser à débrancher les appareils électriques "
+        "avant de les laver... et toujours demander à un adulte de te surveiller "
+        "avant d'utiliser le four"
+    )
+
+
+def test_leading_ellipsis_line_attaches_to_previous():
+    raw = "Avant de commencer.\n... au fil des saisons, toute l'année!"
+    assert postprocess_french_text(raw) == (
+        "Avant de commencer. au fil des saisons, toute l'année!"
+    )
+
+
 def test_apply_ocr_corrections_il():
     assert apply_ocr_corrections("câlins. || est mort") == "câlins. Il est mort"
 

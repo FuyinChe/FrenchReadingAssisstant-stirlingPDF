@@ -10,12 +10,14 @@ import {
 import type { OcrHistoryEntry } from "@app/hooks/tools/frenchReader/historyTypes";
 import { useAiSettings } from "@app/hooks/tools/frenchReader/useAiSettings";
 import { useBubbleDetection } from "@app/hooks/tools/frenchReader/useBubbleDetection";
+import { useParagraphDetection } from "@app/hooks/tools/frenchReader/useParagraphDetection";
 import { useTtsPlay } from "@app/hooks/tools/frenchReader/useTtsPlay";
 import { useTtsSettings } from "@app/hooks/tools/frenchReader/useTtsSettings";
 import type {
   AiExplainMode,
   AiTranslationResults,
   DetectedBubble,
+  DetectedParagraph,
   FrenchReaderSelection,
   OcrLineResult,
   OcrResult,
@@ -91,6 +93,20 @@ interface FrenchReaderContextValue {
   setBubblePreprocess: (enabled: boolean) => void;
   bubbleDetectorReady: boolean | null;
   lastBubbleDetector: string | null;
+  getParagraphsForPage: (page: number) => DetectedParagraph[];
+  detectParagraphsForPage: (params: {
+    file: File | Blob;
+    pageNumber: number;
+    confidenceThreshold?: number;
+  }) => Promise<{ paragraphs: DetectedParagraph[]; detector: string }>;
+  clearParagraphsForPage: (page: number) => void;
+  clearAllParagraphs: () => void;
+  paragraphDetectLoading: boolean;
+  paragraphDetectError: string | null;
+  paragraphPreprocess: boolean;
+  setParagraphPreprocess: (enabled: boolean) => void;
+  paragraphDetectorReady: boolean | null;
+  lastParagraphDetector: string | null;
 }
 
 const FrenchReaderContext = createContext<FrenchReaderContextValue | null>(null);
@@ -119,6 +135,7 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
   const ttsPlay = useTtsPlay();
   const aiSettings = useAiSettings();
   const bubbleDetection = useBubbleDetection();
+  const paragraphDetection = useParagraphDetection();
 
   const clearOcr = useCallback(() => {
     setSelection(null);
@@ -261,7 +278,17 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
       bubblePreprocess: bubbleDetection.bubblePreprocess,
       setBubblePreprocess: bubbleDetection.setBubblePreprocess,
       bubbleDetectorReady: bubbleDetection.bubbleDetectorReady,
-      lastBubbleDetector: bubbleDetection.lastDetector,
+      lastBubbleDetector: bubbleDetection.lastBubbleDetector,
+      getParagraphsForPage: paragraphDetection.getParagraphsForPage,
+      detectParagraphsForPage: paragraphDetection.detectParagraphsForPage,
+      clearParagraphsForPage: paragraphDetection.clearParagraphsForPage,
+      clearAllParagraphs: paragraphDetection.clearAllParagraphs,
+      paragraphDetectLoading: paragraphDetection.paragraphDetectLoading,
+      paragraphDetectError: paragraphDetection.paragraphDetectError,
+      paragraphPreprocess: paragraphDetection.paragraphPreprocess,
+      setParagraphPreprocess: paragraphDetection.setParagraphPreprocess,
+      paragraphDetectorReady: paragraphDetection.paragraphDetectorReady,
+      lastParagraphDetector: paragraphDetection.lastParagraphDetector,
     }),
     [
       selection,
@@ -283,6 +310,7 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
       playTts,
       ttsPlay,
       bubbleDetection,
+      paragraphDetection,
     ],
   );
 

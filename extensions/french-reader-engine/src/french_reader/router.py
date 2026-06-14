@@ -17,12 +17,16 @@ from french_reader.config import settings
 from french_reader.ocr_availability import any_ocr_engine_ready, get_ocr_engine_status
 from french_reader.ocr_service import recognize_french
 from french_reader.export_service import build_history_pdf
+from french_reader.paragraph_detector import detect_text_paragraphs_from_base64
 from french_reader.schemas import (
     AiExplainRequest,
     AiStatusResponse,
     AutoBubblesRequest,
     AutoBubblesResponse,
+    AutoParagraphsRequest,
+    AutoParagraphsResponse,
     DetectedBubble,
+    DetectedParagraph,
     HistoryExportRequest,
     OcrLine,
     OcrRegionRequest,
@@ -46,12 +50,14 @@ router = APIRouter(prefix="/french-reader", tags=["French Reader"])
 
 @router.get("/status")
 async def status() -> dict[str, str | bool]:
+    bubble_status = get_bubble_detector_status()
     return {
         "module": "french-reader",
         "version": "0.4.0",
-        "phase": "M5-bubbles",
+        "phase": "M5-regions",
         "ocr_ready": any_ocr_engine_ready(),
-        "bubble_ready": get_bubble_detector_status().ready,
+        "bubble_ready": bubble_status.ready,
+        "paragraph_ready": bubble_status.opencv_available,
         "tts_ready": True,
         "ai_ready": is_llm_configured(),
     }
@@ -121,6 +127,62 @@ async def ocr_auto_bubbles(body: AutoBubblesRequest) -> AutoBubblesResponse:
                 detector=item.detector,
             )
             for item in detections
+        ],
+    )
+
+
+@router.get("/ocr/paragraphs/status")
+async def paragraph_detector_status() -> dict[str, object]:
+    status = get_bubble_detector_status()
+    return {
+        "ready": status.opencv_available,
+        "opencv_available": status.opencv_available,
+        "detail": status.detail if status.opencv_available else (
+            "Paragraph detection requires OpenCV. Run:\n"
+            "  cd extensions/french-reader-engine && uv sync --extra bubble"
+        ),
+    }
+
+
+@router.post("/ocr/auto-paragraphs", response_model=AutoParagraphsResponse)
+async def ocr_auto_paragraphs(body: AutoParagraphsRequest) -> AutoParagraphsResponse:
+    bubble_status = get_bubble_detector_status()
+    if not bubble_status.opencv_available:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Paragraph detection is not configured. Run:\n"
+                "  cd extensions/french-reader-engine && uv sync --extra bubble"
+            ),
+        )
+
+    threshold = body.confidence_threshold or settings.bubble_confidence_threshold
+    try:
+        detections = detect_text_paragraphs_from_base64(
+            body.image_base64,
+            confidence_threshold=threshold,
+            preprocess=body.preprocess,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Paragraph detection failed")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return AutoParagraphsResponse(
+        page=body.page,
+        detector="opencv-paragraph",
+        preprocess=body.preprocess,
+        paragraphs=[
+            DetectedParagraph(
+                bbox=item.bbox,
+                confidence=round(item.confidence, 4),
+                detector=item.detector,
+                order=index,
+            )
+            for index, item in enumerate(detections, start=1)
         ],
     )
 

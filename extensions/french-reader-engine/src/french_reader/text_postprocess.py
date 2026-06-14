@@ -35,6 +35,19 @@ def _merge_visual_lines(raw_lines: list[str]) -> list[str]:
             merged[-1] = merged[-1][:-1] + line
             continue
 
+        if merged and line.startswith("..."):
+            prev = merged[-1].rstrip()
+            rest = line.lstrip(". ")
+            if prev.endswith("..."):
+                merged[-1] = f"{prev} {rest}".strip()
+            else:
+                merged[-1] = f"{prev} {rest}".strip()
+            continue
+
+        if merged and merged[-1].rstrip().endswith("..."):
+            merged[-1] = f"{merged[-1].rstrip()} {line.lstrip('. ')}".strip()
+            continue
+
         if merged and merged[-1] != "":
             if _FRENCH_PUNCT_ONLY.match(line) or (len(line) <= 2 and line in ":;?!"):
                 merged[-1] = _attach_to_previous(merged[-1], line)
@@ -55,7 +68,7 @@ def _split_french_sentences(paragraph: str) -> list[str]:
 
     chunks = _SENTENCE_BOUNDARY.split(paragraph)
     if len(chunks) == 1:
-        chunks = re.split(r"(?<=[.!?…»\"])\s+", paragraph)
+        return [paragraph]
 
     sentences: list[str] = []
     pending = ""

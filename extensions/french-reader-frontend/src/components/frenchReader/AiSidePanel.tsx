@@ -43,6 +43,15 @@ export function AiSidePanel({ activeFile, currentPage }: AiSidePanelProps) {
     bubbleDetectorReady,
     lastBubbleDetector,
     getBubblesForPage,
+    detectParagraphsForPage,
+    clearParagraphsForPage,
+    paragraphDetectLoading,
+    paragraphDetectError,
+    paragraphPreprocess,
+    setParagraphPreprocess,
+    paragraphDetectorReady,
+    lastParagraphDetector,
+    getParagraphsForPage,
   } = useFrenchReaderContext();
 
   const fileLabel =
@@ -51,10 +60,19 @@ export function AiSidePanel({ activeFile, currentPage }: AiSidePanelProps) {
       : t("frenchReader.panel.noFile", "No PDF loaded");
 
   const pageBubbles = getBubblesForPage(currentPage);
+  const pageParagraphs = getParagraphsForPage(currentPage);
 
   const handleDetectBubbles = async () => {
     if (!activeFile) return;
     await detectBubblesForPage({
+      file: activeFile,
+      pageNumber: currentPage,
+    });
+  };
+
+  const handleDetectParagraphs = async () => {
+    if (!activeFile) return;
+    await detectParagraphsForPage({
       file: activeFile,
       pageNumber: currentPage,
     });
@@ -66,7 +84,7 @@ export function AiSidePanel({ activeFile, currentPage }: AiSidePanelProps) {
         <Text size="xs" c="dimmed" style={{ flex: 1 }}>
           {t(
             "frenchReader.panel.selectHint",
-            "Drag a rectangle on the page, detect speech bubbles, or click a bubble to OCR.",
+            "Drag a rectangle, run Bubble or Paragraph Detect, or click a highlighted region to OCR.",
           )}
         </Text>
         <FrenchReaderSettingsButton />
@@ -76,7 +94,7 @@ export function AiSidePanel({ activeFile, currentPage }: AiSidePanelProps) {
         <Stack gap="sm">
           <Group justify="space-between" align="center" wrap="wrap">
             <Text size="sm" fw={500}>
-              {t("frenchReader.bubbles.title", "Speech bubbles")}
+              {t("frenchReader.bubbles.title", "Bubbles Detect")}
             </Text>
             <Group gap="xs">
               {pageBubbles.length > 0 && (
@@ -93,15 +111,23 @@ export function AiSidePanel({ activeFile, currentPage }: AiSidePanelProps) {
               <Button
                 size="compact-sm"
                 variant="light"
+                color="violet"
                 leftSection={<AutoFixHighIcon sx={{ fontSize: 16 }} />}
                 loading={bubbleDetectLoading}
                 disabled={!activeFile || bubbleDetectorReady === false}
                 onClick={() => void handleDetectBubbles()}
               >
-                {t("frenchReader.bubbles.detect", "Detect bubbles")}
+                {t("frenchReader.bubbles.detect", "Bubbles Detect")}
               </Button>
             </Group>
           </Group>
+
+          <Text size="xs" c="dimmed">
+            {t(
+              "frenchReader.bubbles.hint",
+              "For comics and picture books — finds speech bubbles.",
+            )}
+          </Text>
 
           <Checkbox
             size="xs"
@@ -137,12 +163,87 @@ export function AiSidePanel({ activeFile, currentPage }: AiSidePanelProps) {
               })}
             </Text>
           )}
+        </Stack>
+      </Paper>
 
-          {!bubbleDetectLoading && pageBubbles.length === 0 && bubbleDetectorReady && (
+      <Paper withBorder p="sm" radius="md">
+        <Stack gap="sm">
+          <Group justify="space-between" align="center" wrap="wrap">
+            <Text size="sm" fw={500}>
+              {t("frenchReader.paragraphs.title", "Paragraph Detect")}
+            </Text>
+            <Group gap="xs">
+              {pageParagraphs.length > 0 && (
+                <Button
+                  variant="subtle"
+                  size="compact-xs"
+                  color="gray"
+                  leftSection={<ClearIcon sx={{ fontSize: 14 }} />}
+                  onClick={() => clearParagraphsForPage(currentPage)}
+                >
+                  {t("frenchReader.paragraphs.clear", "Clear")}
+                </Button>
+              )}
+              <Button
+                size="compact-sm"
+                variant="light"
+                color="teal"
+                leftSection={<AutoFixHighIcon sx={{ fontSize: 16 }} />}
+                loading={paragraphDetectLoading}
+                disabled={!activeFile || paragraphDetectorReady === false}
+                onClick={() => void handleDetectParagraphs()}
+              >
+                {t("frenchReader.paragraphs.detect", "Paragraph Detect")}
+              </Button>
+            </Group>
+          </Group>
+
+          <Text size="xs" c="dimmed">
+            {t(
+              "frenchReader.paragraphs.hint",
+              "For prose PDFs — finds whole paragraph blocks, not individual words.",
+            )}
+          </Text>
+
+          <Checkbox
+            size="xs"
+            label={t(
+              "frenchReader.paragraphs.preprocess",
+              "Enhance page contrast before detection (OpenCV)",
+            )}
+            checked={paragraphPreprocess}
+            onChange={(event) => setParagraphPreprocess(event.currentTarget.checked)}
+          />
+
+          {paragraphDetectorReady === false && (
+            <Alert color="yellow" variant="light">
+              {t(
+                "frenchReader.paragraphs.notReady",
+                "Paragraph detection needs OpenCV. Run: cd extensions/french-reader-engine && uv sync --extra bubble",
+              )}
+            </Alert>
+          )}
+
+          {paragraphDetectError && (
+            <Alert
+              color="red"
+              variant="light"
+              title={t("frenchReader.paragraphs.error", "Detection failed")}
+            >
+              {paragraphDetectError}
+            </Alert>
+          )}
+
+          {!paragraphDetectLoading && pageParagraphs.length > 0 && (
             <Text size="xs" c="dimmed">
               {t(
-                "frenchReader.bubbles.empty",
-                "No bubbles detected yet on this page.",
+                "frenchReader.paragraphs.found",
+                "{{count}} paragraph(s) on page {{page}} · {{detector}}",
+                {
+                  count: pageParagraphs.length,
+                  page: currentPage,
+                  detector: lastParagraphDetector ?? pageParagraphs[0]?.detector ?? "opencv-paragraph",
+                },
               )}
             </Text>
           )}
@@ -191,7 +292,7 @@ export function AiSidePanel({ activeFile, currentPage }: AiSidePanelProps) {
             <Text size="sm" c="dimmed">
               {t(
                 "frenchReader.panel.ocrEmpty",
-                "No text yet. Select a region or click a detected bubble.",
+                "No text yet. Select a region or click a detected bubble or paragraph.",
               )}
             </Text>
           )}
