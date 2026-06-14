@@ -80,10 +80,10 @@ function FrenchReaderInner(_props: BaseToolProps) {
       {
         title: t("frenchReader.panel.title", "Reading assistant"),
         isCollapsed: false,
-        content: <AiSidePanel activeFile={activeFile} />,
+        content: <AiSidePanel activeFile={activeFile} currentPage={pageState.currentPage} />,
       },
     ];
-  }, [hasFiles, isFrenchReaderActive, activeFile, t]);
+  }, [hasFiles, isFrenchReaderActive, activeFile, pageState.currentPage, t]);
 
   return (
     <>

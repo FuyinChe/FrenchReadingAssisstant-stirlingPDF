@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { isStirlingFile } from "@app/types/fileContext";
+import { BubbleOverlay } from "@app/components/frenchReader/BubbleOverlay";
 import { RegionSelector } from "@app/components/frenchReader/RegionSelector";
 import { useFrenchReaderContext } from "@app/contexts/FrenchReaderContext";
-import { cropPageRegionToBase64 } from "@app/services/cropPageRegion";
-import { ocrRegion } from "@app/services/frenchReaderApi";
-import { useViewScopedFiles } from "@app/hooks/tools/shared/useViewScopedFiles";
+import { useFrenchReaderOcr } from "@app/hooks/tools/frenchReader/useFrenchReaderOcr";
 import type { NormalizedBBox } from "@app/hooks/tools/frenchReader/types";
+import { useViewScopedFiles } from "@app/hooks/tools/shared/useViewScopedFiles";
 
 interface FrenchReaderRegionPortalProps {
   pageNumber: number;
@@ -21,13 +21,14 @@ export function FrenchReaderRegionPortal({
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
   const scopedFiles = useViewScopedFiles();
   const activeFile = scopedFiles[0];
+  const { runOcr } = useFrenchReaderOcr();
   const {
-    setSelection,
-    setOcrLoading,
-    setOcrResult,
-    setOcrError,
-    recordOcrResult,
+    selection,
+    ocrLoading,
+    getBubblesForPage,
   } = useFrenchReaderContext();
+
+  const bubbles = getBubblesForPage(pageNumber);
 
   useEffect(() => {
     const page = document.querySelector(
@@ -50,41 +51,38 @@ export function FrenchReaderRegionPortal({
     };
   }, [pageIndex, pageNumber]);
 
-  const handleComplete = async (bbox: NormalizedBBox) => {
+  const handleRegionComplete = async (bbox: NormalizedBBox) => {
     if (!activeFile) {
-      setOcrError("No PDF file loaded");
       return;
     }
 
-    const selection = { page: pageNumber, pageIndex, bbox };
-    setSelection(selection);
-    setOcrLoading(true);
-    setOcrError(null);
-    setOcrResult(null);
+    await runOcr({
+      file: activeFile,
+      fileName:
+        activeFile && isStirlingFile(activeFile)
+          ? activeFile.name
+          : "document.pdf",
+      pageNumber,
+      pageIndex,
+      bbox,
+    });
+  };
 
-    try {
-      const imageBase64 = await cropPageRegionToBase64(
-        activeFile,
-        pageNumber,
-        bbox,
-      );
-      const result = await ocrRegion(imageBase64, selection);
-      setOcrResult(result);
-      recordOcrResult({
-        fileName:
-          activeFile && isStirlingFile(activeFile)
-            ? activeFile.name
-            : "document.pdf",
-        page: pageNumber,
-        result,
-      });
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "OCR failed unexpectedly";
-      setOcrError(message);
-    } finally {
-      setOcrLoading(false);
+  const handleBubbleClick = async (bbox: NormalizedBBox) => {
+    if (!activeFile || ocrLoading) {
+      return;
     }
+
+    await runOcr({
+      file: activeFile,
+      fileName:
+        activeFile && isStirlingFile(activeFile)
+          ? activeFile.name
+          : "document.pdf",
+      pageNumber,
+      pageIndex,
+      bbox,
+    });
   };
 
   if (!mountNode) {
@@ -92,7 +90,15 @@ export function FrenchReaderRegionPortal({
   }
 
   return createPortal(
-    <RegionSelector pageIndex={pageIndex} onComplete={handleComplete} />,
+    <>
+      <RegionSelector pageIndex={pageIndex} onComplete={handleRegionComplete} />
+      <BubbleOverlay
+        bubbles={bubbles}
+        activeBbox={selection?.page === pageNumber ? selection.bbox : null}
+        disabled={ocrLoading}
+        onBubbleClick={handleBubbleClick}
+      />
+    </>,
     mountNode,
   );
 }

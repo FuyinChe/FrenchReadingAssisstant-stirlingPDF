@@ -2,6 +2,8 @@ import type { OcrHistoryEntry } from "@app/hooks/tools/frenchReader/historyTypes
 import type {
   AiExplainMode,
   AiStatusResponse,
+  AutoBubblesResponse,
+  BubbleDetectorStatusResponse,
   FrenchReaderSelection,
   OcrResult,
   TtsRate,
@@ -53,6 +55,40 @@ export async function ocrRegion(
     confidence: data.confidence,
     lines: data.lines ?? [],
   };
+}
+
+export async function fetchBubbleDetectorStatus(): Promise<BubbleDetectorStatusResponse> {
+  const response = await fetch(`${API_BASE}/ocr/bubbles/status`);
+  if (!response.ok) {
+    throw new Error(await readErrorDetail(response));
+  }
+  return (await response.json()) as BubbleDetectorStatusResponse;
+}
+
+export async function detectAutoBubbles(params: {
+  imageBase64: string;
+  page: number;
+  confidenceThreshold?: number;
+  preprocess?: boolean;
+  preferYolo?: boolean;
+}): Promise<AutoBubblesResponse> {
+  const response = await fetch(`${API_BASE}/ocr/auto-bubbles`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      image_base64: params.imageBase64,
+      page: params.page,
+      confidence_threshold: params.confidenceThreshold ?? 0.35,
+      preprocess: params.preprocess ?? false,
+      prefer_yolo: params.preferYolo ?? true,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorDetail(response));
+  }
+
+  return (await response.json()) as AutoBubblesResponse;
 }
 
 export async function fetchTtsVoices(lang = "fr"): Promise<TtsVoicesResponse> {

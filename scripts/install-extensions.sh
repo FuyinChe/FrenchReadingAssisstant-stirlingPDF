@@ -64,7 +64,7 @@ log "Installing French Reader engine Python deps..."
 (
   cd "${EXT_ENGINE}"
   if command -v uv >/dev/null 2>&1; then
-    uv sync --dev
+    uv sync --dev --extra bubble
   else
     python3 -m pip install -e . 2>/dev/null || true
   fi

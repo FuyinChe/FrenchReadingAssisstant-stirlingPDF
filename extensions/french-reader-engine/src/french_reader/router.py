@@ -5,6 +5,8 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
 
 from french_reader.ai_availability import get_ai_status, is_llm_configured
+from french_reader.bubble_availability import get_bubble_detector_status
+from french_reader.bubble_detector import detect_speech_bubbles
 from french_reader.ai_service import (
     AiConfigurationError,
     AiRequestError,
@@ -18,6 +20,9 @@ from french_reader.export_service import build_history_pdf
 from french_reader.schemas import (
     AiExplainRequest,
     AiStatusResponse,
+    AutoBubblesRequest,
+    AutoBubblesResponse,
+    DetectedBubble,
     HistoryExportRequest,
     OcrLine,
     OcrRegionRequest,
@@ -44,8 +49,9 @@ async def status() -> dict[str, str | bool]:
     return {
         "module": "french-reader",
         "version": "0.4.0",
-        "phase": "M4-ai",
+        "phase": "M5-bubbles",
         "ocr_ready": any_ocr_engine_ready(),
+        "bubble_ready": get_bubble_detector_status().ready,
         "tts_ready": True,
         "ai_ready": is_llm_configured(),
     }
@@ -61,6 +67,62 @@ async def ocr_engines() -> dict[str, object]:
             for e in engines
         ],
     }
+
+
+@router.get("/ocr/bubbles/status")
+async def bubble_detector_status() -> dict[str, object]:
+    status = get_bubble_detector_status()
+    return {
+        "ready": status.ready,
+        "opencv_available": status.opencv_available,
+        "yolo_available": status.yolo_available,
+        "detail": status.detail,
+        "default_model": settings.bubble_yolo_model,
+    }
+
+
+@router.post("/ocr/auto-bubbles", response_model=AutoBubblesResponse)
+async def ocr_auto_bubbles(body: AutoBubblesRequest) -> AutoBubblesResponse:
+    bubble_status = get_bubble_detector_status()
+    if not bubble_status.ready:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Bubble detection is not configured. Run:\n"
+                "  cd extensions/french-reader-engine && uv sync --extra bubble"
+            ),
+        )
+
+    threshold = body.confidence_threshold or settings.bubble_confidence_threshold
+    try:
+        detections, detector = detect_speech_bubbles(
+            body.image_base64,
+            confidence_threshold=threshold,
+            preprocess=body.preprocess,
+            prefer_yolo=body.prefer_yolo,
+            yolo_model_path=settings.bubble_yolo_model,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Bubble detection failed")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return AutoBubblesResponse(
+        page=body.page,
+        detector=detector,
+        preprocess=body.preprocess,
+        bubbles=[
+            DetectedBubble(
+                bbox=item.bbox,
+                confidence=round(item.confidence, 4),
+                detector=item.detector,
+            )
+            for item in detections
+        ],
+    )
 
 
 @router.post("/ocr/region", response_model=OcrRegionResponse)

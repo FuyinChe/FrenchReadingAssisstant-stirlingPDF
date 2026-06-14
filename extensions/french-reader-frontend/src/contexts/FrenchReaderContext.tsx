@@ -9,11 +9,13 @@ import {
 
 import type { OcrHistoryEntry } from "@app/hooks/tools/frenchReader/historyTypes";
 import { useAiSettings } from "@app/hooks/tools/frenchReader/useAiSettings";
+import { useBubbleDetection } from "@app/hooks/tools/frenchReader/useBubbleDetection";
 import { useTtsPlay } from "@app/hooks/tools/frenchReader/useTtsPlay";
 import { useTtsSettings } from "@app/hooks/tools/frenchReader/useTtsSettings";
 import type {
   AiExplainMode,
   AiTranslationResults,
+  DetectedBubble,
   FrenchReaderSelection,
   OcrLineResult,
   OcrResult,
@@ -75,6 +77,20 @@ interface FrenchReaderContextValue {
   ttsSynthesizing: boolean;
   ttsBusy: boolean;
   ttsError: string | null;
+  getBubblesForPage: (page: number) => DetectedBubble[];
+  detectBubblesForPage: (params: {
+    file: File | Blob;
+    pageNumber: number;
+    confidenceThreshold?: number;
+  }) => Promise<{ bubbles: DetectedBubble[]; detector: string }>;
+  clearBubblesForPage: (page: number) => void;
+  clearAllBubbles: () => void;
+  bubbleDetectLoading: boolean;
+  bubbleDetectError: string | null;
+  bubblePreprocess: boolean;
+  setBubblePreprocess: (enabled: boolean) => void;
+  bubbleDetectorReady: boolean | null;
+  lastBubbleDetector: string | null;
 }
 
 const FrenchReaderContext = createContext<FrenchReaderContextValue | null>(null);
@@ -102,6 +118,7 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
   const ttsSettings = useTtsSettings();
   const ttsPlay = useTtsPlay();
   const aiSettings = useAiSettings();
+  const bubbleDetection = useBubbleDetection();
 
   const clearOcr = useCallback(() => {
     setSelection(null);
@@ -235,6 +252,16 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
       ttsSynthesizing: ttsPlay.synthesizing,
       ttsBusy: ttsPlay.busy,
       ttsError: ttsPlay.error,
+      getBubblesForPage: bubbleDetection.getBubblesForPage,
+      detectBubblesForPage: bubbleDetection.detectBubblesForPage,
+      clearBubblesForPage: bubbleDetection.clearBubblesForPage,
+      clearAllBubbles: bubbleDetection.clearAllBubbles,
+      bubbleDetectLoading: bubbleDetection.bubbleDetectLoading,
+      bubbleDetectError: bubbleDetection.bubbleDetectError,
+      bubblePreprocess: bubbleDetection.bubblePreprocess,
+      setBubblePreprocess: bubbleDetection.setBubblePreprocess,
+      bubbleDetectorReady: bubbleDetection.bubbleDetectorReady,
+      lastBubbleDetector: bubbleDetection.lastDetector,
     }),
     [
       selection,
@@ -255,6 +282,7 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
       ttsSettings,
       playTts,
       ttsPlay,
+      bubbleDetection,
     ],
   );
 

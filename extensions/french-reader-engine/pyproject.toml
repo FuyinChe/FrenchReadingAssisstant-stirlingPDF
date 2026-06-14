@@ -24,6 +24,13 @@ ocr-paddle = [
 ]
 # Alias kept for docs/scripts
 ocr = ["pytesseract>=0.3.10"]
+bubble = [
+    "opencv-python-headless>=4.8.0",
+]
+bubble-yolo = [
+    "opencv-python-headless>=4.8.0",
+    "ultralytics>=8.0.0",
+]
 
 [dependency-groups]
 dev = [

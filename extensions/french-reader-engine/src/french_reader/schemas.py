@@ -80,3 +80,24 @@ class HistoryExportEntry(BaseModel):
 class HistoryExportRequest(BaseModel):
     source_file_name: str = Field(min_length=1)
     entries: list[HistoryExportEntry] = Field(min_length=1)
+
+
+class AutoBubblesRequest(BaseModel):
+    image_base64: str = Field(min_length=16)
+    page: int = Field(ge=1)
+    confidence_threshold: float = Field(default=0.35, ge=0.05, le=0.95)
+    preprocess: bool = False
+    prefer_yolo: bool = True
+
+
+class DetectedBubble(BaseModel):
+    bbox: BBox
+    confidence: float = Field(ge=0, le=1)
+    detector: str
+
+
+class AutoBubblesResponse(BaseModel):
+    page: int = Field(ge=1)
+    bubbles: list[DetectedBubble] = Field(default_factory=list)
+    detector: str
+    preprocess: bool = False

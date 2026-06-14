@@ -48,3 +48,24 @@ export interface FrenchReaderSelection {
   pageIndex: number;
   bbox: NormalizedBBox;
 }
+
+export interface DetectedBubble {
+  bbox: NormalizedBBox;
+  confidence: number;
+  detector: string;
+}
+
+export interface AutoBubblesResponse {
+  page: number;
+  bubbles: DetectedBubble[];
+  detector: string;
+  preprocess: boolean;
+}
+
+export interface BubbleDetectorStatusResponse {
+  ready: boolean;
+  opencv_available: boolean;
+  yolo_available: boolean;
+  detail: string;
+  default_model: string;
+}

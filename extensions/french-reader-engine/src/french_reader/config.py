@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     llm_base_url: str = "https://api.moonshot.ai/v1"
     llm_model: str = "moonshot-v1-32k"
     llm_timeout_seconds: float = 90.0
+    bubble_yolo_model: str = "ogkalu/comic-speech-bubble-detector-yolov8m"
+    bubble_confidence_threshold: float = 0.35
 
     def resolve_llm_api_key(self) -> str | None:
         key = self.llm_api_key.strip()
