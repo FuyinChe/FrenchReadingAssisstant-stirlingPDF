@@ -1092,6 +1092,11 @@ def _score_picture_book_zone(
     coverage = span / zone_h
     line_density = len(lines) / max(span / max(img_h * 0.02, 1), 1)
 
+    horizontal_count = sum(
+        1 for line in lines if _is_horizontal_text_line(line, img_w, img_h)
+    )
+    is_horizontal_block = horizontal_count >= max(2, len(lines) - 1)
+
     score = len(lines) * 5.0
     score += line_density * 2.0
     score += min(median_w / img_w, 0.55) * 12
@@ -1099,15 +1104,23 @@ def _score_picture_book_zone(
 
     thin_limit = max(16, int(img_h * 0.022))
     thick_ratio = sum(1 for line in lines if line.h > thin_limit) / len(lines)
-    score *= max(0.05, 1.0 - thick_ratio * 1.6)
+    if is_horizontal_block:
+        score *= max(0.45, 1.0 - thick_ratio * 0.35)
+    else:
+        score *= max(0.05, 1.0 - thick_ratio * 1.6)
 
     if 0.14 <= median_w / img_w <= 0.48:
         score += 10
+    if is_horizontal_block and median_w >= img_w * 0.55:
+        score += 14
     if len(lines) >= 4:
         score += 8
 
     if median_w > img_w * 0.68:
-        score *= 0.05
+        if is_horizontal_block:
+            score += 6
+        else:
+            score *= 0.05
     if coverage > 0.82 and len(lines) > 12:
         score *= 0.2
     if len(lines) >= 3 and width_spread > 0.45:
@@ -1145,9 +1158,85 @@ def _expand_line_right_from_gray(gray, line: _TextLine, img_w: int) -> _TextLine
     return _TextLine(x=line.x, y=line.y, w=expanded_w, h=line.h)
 
 
+def _is_horizontal_text_line(line: _TextLine, img_w: int, img_h: int) -> bool:
+    aspect = line.w / max(line.h, 1)
+    return aspect >= 5.0 and line.w >= img_w * 0.12 and line.h <= img_h * 0.08
+
+
+def _filter_lines_to_primary_cluster(
+    lines: list[_TextLine],
+    y0: int,
+    y1: int,
+    img_w: int,
+    img_h: int,
+) -> list[_TextLine]:
+    """Keep the one paragraph-like line cluster; drop scattered illustration noise."""
+    if len(lines) <= 3:
+        return lines
+
+    ordered = sorted(lines, key=lambda item: item.y)
+    gap_thresh = max(14, int(img_h * 0.028))
+    clusters: list[list[_TextLine]] = [[ordered[0]]]
+    for line in ordered[1:]:
+        if line.y - clusters[-1][-1].y2 <= gap_thresh:
+            clusters[-1].append(line)
+        else:
+            clusters.append([line])
+
+    zone_h = max(1, y1 - y0)
+
+    def _cluster_score(cluster: list[_TextLine]) -> float:
+        count = len(cluster)
+        rel_y = (min(line.y for line in cluster) - y0) / zone_h
+        xs = [line.x for line in cluster]
+        widths = [line.w for line in cluster]
+        left_spread = max(xs) - min(xs)
+        width_spread = _median(
+            [abs(width - _median(widths)) / max(_median(widths), 1) for width in widths]
+        )
+        horizontal = sum(1 for line in cluster if _is_horizontal_text_line(line, img_w, img_h))
+
+        score = count * 8.0 + horizontal * 4.0
+        score += min(_median(widths) / img_w, 0.55) * 10.0
+        score -= width_spread * 8.0
+        if left_spread > img_w * 0.18 and count >= 3:
+            score *= 0.25
+
+        if y0 <= img_h * 0.05:
+            score += (1.0 - rel_y) * 18.0
+            if rel_y > 0.55:
+                score *= 0.08
+        else:
+            score += rel_y * 18.0
+            if rel_y < 0.35:
+                score *= 0.08
+        return score
+
+    best = max(clusters, key=_cluster_score)
+    if len(best) >= 2:
+        return sorted(best, key=lambda item: item.y)
+    return lines
+
+
 def _lines_look_like_text_block(lines: list[_TextLine], img_w: int, img_h: int) -> bool:
     if len(lines) < 3:
         return False
+
+    horizontal_lines = [line for line in lines if _is_horizontal_text_line(line, img_w, img_h)]
+    if len(horizontal_lines) >= 3 and len(horizontal_lines) / len(lines) >= 0.6:
+        widths = [line.w for line in horizontal_lines]
+        median_w = _median(widths)
+        if median_w < img_w * 0.12:
+            return False
+        width_spread = _median(
+            [abs(width - median_w) / max(median_w, 1) for width in widths]
+        )
+        left_spread = max(line.x for line in horizontal_lines) - min(line.x for line in horizontal_lines)
+        if width_spread > 0.45:
+            return False
+        if left_spread > img_w * 0.12 and width_spread > 0.2:
+            return False
+        return True
 
     thin_limit = max(16, int(img_h * 0.022))
     thin_lines = [line for line in lines if line.h <= thin_limit]
@@ -1236,6 +1325,7 @@ def _detect_picture_book_paragraphs(
     candidates: list[tuple[float, BubbleDetection]] = []
     for x0, y0, x1, y1 in zones:
         lines = _detect_lines_in_text_zone(gray, x0, y0, x1, y1, img_w, img_h)
+        lines = _filter_lines_to_primary_cluster(lines, y0, y1, img_w, img_h)
         if not _lines_look_like_text_block(lines, img_w, img_h):
             continue
         zone_group = [

@@ -6,6 +6,7 @@ import pytest
 from PIL import Image, ImageDraw, ImageFont
 
 from french_reader.paragraph_detector import detect_text_paragraphs
+from tests.regression_assets import regression_assets_dir
 
 pytest.importorskip("cv2")
 
@@ -251,8 +252,9 @@ def test_paragraph_preprocess_keeps_text_block():
 
 
 def _picture_book_fixture_paths():
-    root = Path(__file__).resolve().parents[4]
-    assets = root / ".cursor" / "projects" / "Users-fuyinche-Documents-GitHub-FrenchPdfReader" / "assets"
+    assets = regression_assets_dir()
+    if assets is None:
+        return []
     return sorted(assets.glob("Screenshot_2026-06-14*.png"))
 
 

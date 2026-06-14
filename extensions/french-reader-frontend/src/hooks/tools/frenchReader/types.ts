@@ -43,6 +43,23 @@ export interface AiStatusResponse {
   detail: string;
 }
 
+export interface LlmProviderInfo {
+  id: string;
+  name: string;
+  base_url: string;
+  default_model: string;
+  key_hint: string;
+  docs_url: string;
+  api_style?: string;
+  requires_endpoint?: boolean;
+  group?: string;
+}
+
+export interface LlmProvidersResponse {
+  default_provider: string;
+  providers: LlmProviderInfo[];
+}
+
 export interface FrenchReaderSelection {
   page: number;
   pageIndex: number;

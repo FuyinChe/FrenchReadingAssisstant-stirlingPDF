@@ -2,14 +2,15 @@ import { useCallback, useState } from "react";
 
 import type { AiExplainMode } from "@app/hooks/tools/frenchReader/types";
 import {
-  clearUserLlmApiKey,
-  loadUserLlmApiKey,
-  saveUserLlmApiKey,
-} from "@app/services/frenchReaderUserApiKey";
-import {
   loadAiPreferences,
   saveAiPreferences,
 } from "@app/services/frenchReaderAiPrefs";
+import {
+  clearUserLlmSettings,
+  loadUserLlmSettings,
+  saveUserLlmSettings,
+  type UserLlmSettings,
+} from "@app/services/frenchReaderLlmSettings";
 
 export function useAiSettings() {
   const [modes, setModesState] = useState<AiExplainMode[]>(
@@ -18,7 +19,9 @@ export function useAiSettings() {
   const [targetLang, setTargetLangState] = useState(
     () => loadAiPreferences().targetLang,
   );
-  const [userApiKey, setUserApiKeyState] = useState(() => loadUserLlmApiKey());
+  const [llmSettings, setLlmSettingsState] = useState<UserLlmSettings>(
+    () => loadUserLlmSettings(),
+  );
 
   const setModes = useCallback(
     (next: AiExplainMode[]) => {
@@ -38,16 +41,29 @@ export function useAiSettings() {
     [modes],
   );
 
-  const setUserApiKey = useCallback((next: string) => {
-    const cleaned = next.trim();
-    saveUserLlmApiKey(cleaned);
-    setUserApiKeyState(cleaned);
+  const saveLlmSettings = useCallback((next: UserLlmSettings) => {
+    const cleaned: UserLlmSettings = {
+      providerId: next.providerId.trim() || loadUserLlmSettings().providerId,
+      apiKey: next.apiKey.trim(),
+      customBaseUrl: next.customBaseUrl.trim(),
+      customModel: next.customModel.trim(),
+    };
+    saveUserLlmSettings(cleaned);
+    setLlmSettingsState(cleaned);
   }, []);
 
-  const clearUserApiKey = useCallback(() => {
-    clearUserLlmApiKey();
-    setUserApiKeyState("");
+  const clearLlmSettings = useCallback(() => {
+    clearUserLlmSettings();
+    setLlmSettingsState(loadUserLlmSettings());
   }, []);
 
-  return { modes, setModes, targetLang, setTargetLang, userApiKey, setUserApiKey, clearUserApiKey };
+  return {
+    modes,
+    setModes,
+    targetLang,
+    setTargetLang,
+    llmSettings,
+    saveLlmSettings,
+    clearLlmSettings,
+  };
 }

@@ -4,7 +4,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
 
-from french_reader.ai_availability import get_ai_status, is_llm_configured
+from french_reader.ai_availability import get_ai_status, get_llm_providers_payload, is_llm_configured
 from french_reader.bubble_availability import get_bubble_detector_status
 from french_reader.bubble_detector import detect_speech_bubbles
 from french_reader.ai_service import (
@@ -29,6 +29,7 @@ from french_reader.schemas import (
     DetectedBubble,
     DetectedParagraph,
     HistoryExportRequest,
+    LlmProvidersResponse,
     OcrLine,
     OcrRegionRequest,
     OcrRegionResponse,
@@ -250,11 +251,25 @@ async def tts_synthesize(body: TtsSynthesizeRequest) -> Response:
     return Response(content=audio, media_type="audio/mpeg")
 
 
+@router.get("/ai/providers", response_model=LlmProvidersResponse)
+async def ai_providers() -> LlmProvidersResponse:
+    payload = get_llm_providers_payload()
+    return LlmProvidersResponse(**payload)
+
+
 @router.get("/ai/status", response_model=AiStatusResponse)
 async def ai_status(
     api_key: str | None = Query(default=None, max_length=512),
+    provider: str | None = Query(default=None, max_length=32),
+    base_url: str | None = Query(default=None, max_length=256),
+    model: str | None = Query(default=None, max_length=128),
 ) -> AiStatusResponse:
-    status = get_ai_status(api_key)
+    status = get_ai_status(
+        api_key,
+        provider_id=provider,
+        base_url_override=base_url,
+        model_override=model,
+    )
     return AiStatusResponse(**status)
 
 
@@ -273,7 +288,15 @@ async def ai_explain(body: AiExplainRequest) -> StreamingResponse:
 
     async def event_stream():
         try:
-            async for delta in stream_explain(body.text, body.mode, body.target_lang, body.api_key):
+            async for delta in stream_explain(
+                body.text,
+                body.mode,
+                body.target_lang,
+                body.api_key,
+                provider_id=body.provider,
+                base_url=body.base_url,
+                model=body.model,
+            ):
                 payload = json.dumps({"delta": delta}, ensure_ascii=False)
                 yield f"data: {payload}\n\n"
             yield "data: [DONE]\n\n"

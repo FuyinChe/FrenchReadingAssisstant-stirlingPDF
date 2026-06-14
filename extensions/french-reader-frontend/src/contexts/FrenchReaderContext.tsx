@@ -23,6 +23,7 @@ import type {
   OcrResult,
   TtsRate,
 } from "@app/hooks/tools/frenchReader/types";
+import type { UserLlmSettings } from "@app/services/frenchReaderLlmSettings";
 import { exportHistoryPdf } from "@app/services/frenchReaderApi";
 import {
   appendOcrHistory,
@@ -63,9 +64,9 @@ interface FrenchReaderContextValue {
   setAiModes: (modes: AiExplainMode[]) => void;
   aiTargetLang: string;
   setAiTargetLang: (lang: string) => void;
-  userApiKey: string;
-  setUserApiKey: (apiKey: string) => void;
-  clearUserApiKey: () => void;
+  llmSettings: UserLlmSettings;
+  saveLlmSettings: (settings: UserLlmSettings) => void;
+  clearLlmSettings: () => void;
   ttsVoice: string;
   ttsRate: TtsRate;
   setTtsVoice: (voice: string) => void;
@@ -253,9 +254,9 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
       setAiModes: aiSettings.setModes,
       aiTargetLang: aiSettings.targetLang,
       setAiTargetLang: aiSettings.setTargetLang,
-      userApiKey: aiSettings.userApiKey,
-      setUserApiKey: aiSettings.setUserApiKey,
-      clearUserApiKey: aiSettings.clearUserApiKey,
+      llmSettings: aiSettings.llmSettings,
+      saveLlmSettings: aiSettings.saveLlmSettings,
+      clearLlmSettings: aiSettings.clearLlmSettings,
       ttsVoice: ttsSettings.voice,
       ttsRate: ttsSettings.rate,
       setTtsVoice: ttsSettings.setVoice,

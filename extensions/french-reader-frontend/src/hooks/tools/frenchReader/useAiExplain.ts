@@ -2,12 +2,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { AiExplainMode, AiTranslationResults } from "@app/hooks/tools/frenchReader/types";
 import { fetchAiStatus, streamAiExplain } from "@app/services/frenchReaderApi";
+import type { UserLlmSettings } from "@app/services/frenchReaderLlmSettings";
+import { providerRequiresEndpoint } from "@app/services/frenchReaderLlmSettings";
 
 interface UseAiExplainOptions {
   text: string;
   modes: AiExplainMode[];
   targetLang: string;
-  userApiKey?: string;
+  llmSettings: UserLlmSettings;
   onComplete?: (mode: AiExplainMode, result: string) => void;
 }
 
@@ -15,7 +17,7 @@ export function useAiExplain({
   text,
   modes,
   targetLang,
-  userApiKey = "",
+  llmSettings,
   onComplete,
 }: UseAiExplainOptions) {
   const [serverReady, setServerReady] = useState<boolean | null>(null);
@@ -28,9 +30,14 @@ export function useAiExplain({
   const abortRef = useRef<AbortController | null>(null);
   const onCompleteRef = useRef(onComplete);
 
-  const trimmedUserKey = userApiKey.trim();
+  const trimmedUserKey = llmSettings.apiKey.trim();
+  const endpointReady =
+    !providerRequiresEndpoint(llmSettings.providerId) ||
+    (llmSettings.customBaseUrl.trim().length > 0 &&
+      llmSettings.customModel.trim().length > 0);
+  const clientReady = Boolean(trimmedUserKey && endpointReady);
   const aiReady =
-    serverReady === null ? null : serverReady || Boolean(trimmedUserKey);
+    serverReady === null ? null : serverReady || clientReady;
 
   useEffect(() => {
     onCompleteRef.current = onComplete;
@@ -38,7 +45,7 @@ export function useAiExplain({
 
   useEffect(() => {
     let cancelled = false;
-    fetchAiStatus()
+    fetchAiStatus(clientReady ? llmSettings : undefined)
       .then((status) => {
         if (cancelled) return;
         setServerReady(Boolean(status.server_configured ?? status.ready));
@@ -46,14 +53,20 @@ export function useAiExplain({
       })
       .catch((err) => {
         if (cancelled) return;
-        setServerReady(Boolean(trimmedUserKey));
+        setServerReady(clientReady);
         setAiDetail(err instanceof Error ? err.message : "AI status unavailable");
       });
 
     return () => {
       cancelled = true;
     };
-  }, [trimmedUserKey]);
+  }, [
+    clientReady,
+    llmSettings.providerId,
+    llmSettings.apiKey,
+    llmSettings.customBaseUrl,
+    llmSettings.customModel,
+  ]);
 
   useEffect(() => {
     setResults({});
@@ -93,7 +106,12 @@ export function useAiExplain({
         let finalResult = "";
 
         await streamAiExplain(
-          { text, mode, targetLang, userApiKey: trimmedUserKey || undefined },
+          {
+            text,
+            mode,
+            targetLang,
+            llmSettings: clientReady ? llmSettings : undefined,
+          },
           (chunk) => {
             finalResult += chunk;
             setResults((prev) => ({
@@ -118,7 +136,7 @@ export function useAiExplain({
       }
       abortRef.current = null;
     }
-  }, [aiReady, modes, stop, targetLang, text, trimmedUserKey]);
+  }, [aiReady, clientReady, llmSettings, modes, stop, targetLang, text]);
 
   useEffect(() => () => stop(), [stop]);
 

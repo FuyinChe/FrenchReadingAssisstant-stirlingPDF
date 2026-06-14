@@ -141,7 +141,13 @@ def _score_tesseract_group(
     from french_reader.paragraph_detector import _expand_paragraph_bbox, _union_bbox
 
     if len(lines) < 2:
-        return None
+        if illustrated or not lines:
+            return None
+        line = lines[0]
+        if line.w < max(70, int(img_w * 0.15)):
+            return None
+        if line.w / max(line.h, 1) < 2.0:
+            return None
 
     x, y, bw, bh = _union_bbox([line.as_tuple() for line in lines])
     x, y, bw, bh = _expand_paragraph_bbox(
@@ -170,6 +176,36 @@ def _score_tesseract_group(
     return (x, y, bw, bh), confidence
 
 
+def _filter_quality_tesseract_raw_lines(
+    raw_lines: list[tuple[int, int, int, int, float]],
+    img_w: int,
+    img_h: int,
+    *,
+    min_conf: float = 0.32,
+    illustrated: bool = True,
+) -> list[tuple[int, int, int, int, float]]:
+    min_width_ratio = 0.12 if illustrated else 0.06
+    kept: list[tuple[int, int, int, int, float]] = []
+    for x, y, w, h, conf in raw_lines:
+        aspect = w / max(h, 1)
+        if conf < min_conf:
+            continue
+        if w < img_w * min_width_ratio:
+            continue
+        if illustrated:
+            if aspect < 4.5 and w < img_w * 0.25:
+                continue
+            if h > img_h * 0.09:
+                continue
+        else:
+            if aspect < 2.0 and w < img_w * 0.12:
+                continue
+            if h > img_h * 0.12:
+                continue
+        kept.append((x, y, w, h, conf))
+    return kept
+
+
 def _filter_tesseract_picture_book_lines(lines, img_w: int):
     min_text_width = max(40, int(img_w * 0.08))
     max_text_width = int(img_w * 0.88)
@@ -188,6 +224,7 @@ def try_detect_picture_book_paragraphs_tesseract(
     confidence_threshold: float,
 ) -> list[BubbleDetection] | None:
     from french_reader.paragraph_detector import (
+        _filter_lines_to_primary_cluster,
         _lines_look_like_text_block,
         _score_picture_book_zone,
         _should_use_picture_book_detector,
@@ -214,7 +251,12 @@ def try_detect_picture_book_paragraphs_tesseract(
         if not raw_lines or len(raw_lines) < 2:
             continue
 
+        raw_lines = _filter_quality_tesseract_raw_lines(raw_lines, img_w, img_h)
+        if len(raw_lines) < 2:
+            continue
+
         lines = [_TextLine(x=x, y=y, w=w, h=h) for x, y, w, h, _conf in raw_lines]
+        lines = _filter_lines_to_primary_cluster(lines, y0, y1, img_w, img_h)
         lines = _filter_tesseract_picture_book_lines(lines, img_w)
         if not _lines_look_like_text_block(lines, img_w, img_h):
             continue
@@ -226,6 +268,16 @@ def try_detect_picture_book_paragraphs_tesseract(
         avg_conf = sum(item[4] for item in raw_lines[: len(lines)]) / max(len(lines), 1)
         ex, ey, ew, eh = _union_bbox([line.as_tuple() for line in lines])
         ex, ey, ew, eh = _expand_paragraph_bbox(ex, ey, ew, eh, img_w, img_h, illustrated=True)
+
+        zone_h = max(1, y1 - y0)
+        center_y = (ey + eh / 2) / img_h
+        if y0 <= img_h * 0.05 and (ey - y0) / zone_h > 0.72:
+            continue
+        if y0 >= img_h * 0.5 and (ey + eh - y0) / zone_h < 0.28:
+            continue
+        if eh / img_h > 0.32:
+            continue
+
         confidence = min(
             0.94,
             0.5 + len(lines) * 0.05 + ew / img_w * 0.12 + zone_score * 0.012 + avg_conf * 0.15,
@@ -265,6 +317,10 @@ def try_detect_prose_paragraphs_tesseract(
 
     raw_lines = tesseract_lines_in_region(image, 0, 0, img_w, img_h, psm=3, min_conf=20)
     if not raw_lines or len(raw_lines) < 2:
+        return None
+
+    raw_lines = _filter_quality_tesseract_raw_lines(raw_lines, img_w, img_h, min_conf=0.35, illustrated=False)
+    if len(raw_lines) < 2:
         return None
 
     lines = [_TextLine(x=x, y=y, w=w, h=h) for x, y, w, h, _conf in raw_lines]

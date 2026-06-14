@@ -6,11 +6,14 @@ import type {
   AutoParagraphsResponse,
   BubbleDetectorStatusResponse,
   FrenchReaderSelection,
+  LlmProvidersResponse,
   OcrResult,
   ParagraphDetectorStatusResponse,
   TtsRate,
   TtsVoicesResponse,
 } from "@app/hooks/tools/frenchReader/types";
+import type { UserLlmSettings } from "@app/services/frenchReaderLlmSettings";
+import { FALLBACK_LLM_PROVIDERS, providerRequiresEndpoint } from "@app/services/frenchReaderLlmSettings";
 
 const API_BASE =
   import.meta.env.VITE_FRENCH_READER_API_URL ?? "/french-reader";
@@ -219,12 +222,34 @@ export async function synthesizeTts(params: {
   return response.blob();
 }
 
-export async function fetchAiStatus(): Promise<AiStatusResponse> {
-  const response = await fetch(`${API_BASE}/ai/status`);
+export async function fetchAiStatus(
+  llmSettings?: Pick<UserLlmSettings, "providerId" | "apiKey" | "customBaseUrl" | "customModel">,
+): Promise<AiStatusResponse> {
+  const params = new URLSearchParams();
+  const apiKey = llmSettings?.apiKey?.trim();
+  if (apiKey) params.set("api_key", apiKey);
+  if (llmSettings?.providerId) params.set("provider", llmSettings.providerId);
+  if (llmSettings && providerRequiresEndpoint(llmSettings.providerId)) {
+    if (llmSettings.customBaseUrl) params.set("base_url", llmSettings.customBaseUrl);
+    if (llmSettings.customModel) params.set("model", llmSettings.customModel);
+  }
+  const query = params.toString();
+  const response = await fetch(`${API_BASE}/ai/status${query ? `?${query}` : ""}`);
   if (!response.ok) {
     throw new Error(await readErrorDetail(response));
   }
   return (await response.json()) as AiStatusResponse;
+}
+
+export async function fetchLlmProviders(): Promise<LlmProvidersResponse> {
+  const response = await fetch(`${API_BASE}/ai/providers`);
+  if (!response.ok) {
+    return {
+      default_provider: "kimi",
+      providers: FALLBACK_LLM_PROVIDERS,
+    };
+  }
+  return (await response.json()) as LlmProvidersResponse;
 }
 
 export async function streamAiExplain(
@@ -232,12 +257,13 @@ export async function streamAiExplain(
     text: string;
     mode: AiExplainMode;
     targetLang?: string;
-    userApiKey?: string;
+    llmSettings?: UserLlmSettings;
   },
   onDelta: (chunk: string) => void,
   signal?: AbortSignal,
 ): Promise<void> {
-  const userApiKey = params.userApiKey?.trim();
+  const llmSettings = params.llmSettings;
+  const userApiKey = llmSettings?.apiKey?.trim();
   const response = await fetch(`${API_BASE}/ai/explain`, {
     method: "POST",
     headers: {
@@ -249,6 +275,13 @@ export async function streamAiExplain(
       mode: params.mode,
       target_lang: params.targetLang ?? "zh",
       ...(userApiKey ? { api_key: userApiKey } : {}),
+      ...(llmSettings?.providerId ? { provider: llmSettings.providerId } : {}),
+      ...(llmSettings && providerRequiresEndpoint(llmSettings.providerId) && llmSettings.customBaseUrl
+        ? { base_url: llmSettings.customBaseUrl }
+        : {}),
+      ...(llmSettings && providerRequiresEndpoint(llmSettings.providerId) && llmSettings.customModel
+        ? { model: llmSettings.customModel }
+        : {}),
     }),
     signal,
   });

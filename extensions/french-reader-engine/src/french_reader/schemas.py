@@ -56,6 +56,26 @@ class AiExplainRequest(BaseModel):
     mode: AiExplainMode = "translate"
     target_lang: str = Field(default="zh", min_length=2, max_length=8)
     api_key: str | None = Field(default=None, max_length=512)
+    provider: str | None = Field(default=None, max_length=32)
+    base_url: str | None = Field(default=None, max_length=256)
+    model: str | None = Field(default=None, max_length=128)
+
+
+class LlmProviderInfo(BaseModel):
+    id: str
+    name: str
+    base_url: str
+    default_model: str
+    key_hint: str = ""
+    docs_url: str = ""
+    api_style: str = "openai"
+    requires_endpoint: bool = False
+    group: str = "other"
+
+
+class LlmProvidersResponse(BaseModel):
+    default_provider: str
+    providers: list[LlmProviderInfo]
 
 
 class AiStatusResponse(BaseModel):

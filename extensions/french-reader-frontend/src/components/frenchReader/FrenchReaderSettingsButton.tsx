@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Anchor,
   Button,
   Divider,
   Group,
@@ -10,17 +11,26 @@ import {
   Select,
   Stack,
   Text,
+  TextInput,
   Title,
   Tooltip,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import SettingsIcon from "@mui/icons-material/Settings";
 
 import { useFrenchReaderContext } from "@app/contexts/FrenchReaderContext";
-import type { AiExplainMode, TtsRate } from "@app/hooks/tools/frenchReader/types";
-import { maskUserLlmApiKey } from "@app/services/frenchReaderUserApiKey";
+import type { AiExplainMode, LlmProviderInfo, TtsRate } from "@app/hooks/tools/frenchReader/types";
+import { fetchLlmProviders } from "@app/services/frenchReaderApi";
+import {
+  DEFAULT_LLM_PROVIDER_ID,
+  DEFAULT_USER_LLM_SETTINGS,
+  FALLBACK_LLM_PROVIDERS,
+  maskUserLlmApiKey,
+  providerRequiresEndpoint,
+  type UserLlmSettings,
+} from "@app/services/frenchReaderLlmSettings";
 
 const RATE_OPTIONS: { value: TtsRate; labelKey: string; fallback: string }[] = [
   { value: "-15%", labelKey: "frenchReader.tts.rateSlow", fallback: "Slow" },
@@ -39,6 +49,48 @@ const TARGET_OPTIONS = [
   { value: "en", label: "English" },
 ];
 
+const PROVIDER_GROUP_LABELS: Record<string, { key: string; fallback: string }> = {
+  recommended: { key: "frenchReader.ai.providerGroupRecommended", fallback: "Recommended" },
+  international: {
+    key: "frenchReader.ai.providerGroupInternational",
+    fallback: "Major providers",
+  },
+  other: { key: "frenchReader.ai.providerGroupOther", fallback: "Other" },
+};
+
+function settingsEqual(a: UserLlmSettings, b: UserLlmSettings): boolean {
+  return (
+    a.providerId === b.providerId &&
+    a.apiKey.trim() === b.apiKey.trim() &&
+    a.customBaseUrl.trim() === b.customBaseUrl.trim() &&
+    a.customModel.trim() === b.customModel.trim()
+  );
+}
+
+function buildProviderSelectData(
+  providers: LlmProviderInfo[],
+  t: (key: string, fallback: string) => string,
+) {
+  const grouped = new Map<string, { value: string; label: string }[]>();
+  for (const provider of providers) {
+    const groupKey = provider.group ?? "other";
+    const items = grouped.get(groupKey) ?? [];
+    items.push({ value: provider.id, label: provider.name });
+    grouped.set(groupKey, items);
+  }
+
+  const order = ["recommended", "international", "other"];
+  return order
+    .filter((key) => grouped.has(key))
+    .map((key) => {
+      const meta = PROVIDER_GROUP_LABELS[key] ?? PROVIDER_GROUP_LABELS.other;
+      return {
+        group: t(meta.key, meta.fallback),
+        items: grouped.get(key) ?? [],
+      };
+    });
+}
+
 export function FrenchReaderSettingsButton() {
   const { t } = useTranslation();
   const [opened, { open, close }] = useDisclosure(false);
@@ -55,20 +107,51 @@ export function FrenchReaderSettingsButton() {
     setAiModes,
     aiTargetLang,
     setAiTargetLang,
-    userApiKey,
-    setUserApiKey,
-    clearUserApiKey,
+    llmSettings,
+    saveLlmSettings,
+    clearLlmSettings,
   } = useFrenchReaderContext();
 
-  const [draftApiKey, setDraftApiKey] = useState(userApiKey);
+  const [providers, setProviders] = useState<LlmProviderInfo[]>(FALLBACK_LLM_PROVIDERS);
+  const [defaultProviderId, setDefaultProviderId] = useState(DEFAULT_LLM_PROVIDER_ID);
+  const [draftLlmSettings, setDraftLlmSettings] = useState<UserLlmSettings>(llmSettings);
 
   useEffect(() => {
     if (opened) {
-      setDraftApiKey(userApiKey);
+      setDraftLlmSettings(llmSettings);
+      void fetchLlmProviders().then((response) => {
+        if (response.providers.length > 0) {
+          setProviders(response.providers);
+        }
+        if (response.default_provider) {
+          setDefaultProviderId(response.default_provider);
+        }
+      });
     }
-  }, [opened, userApiKey]);
+  }, [opened, llmSettings]);
+
+  const selectedProvider = useMemo(
+    () =>
+      providers.find((item) => item.id === draftLlmSettings.providerId) ??
+      providers.find((item) => item.id === defaultProviderId) ??
+      providers[0],
+    [defaultProviderId, draftLlmSettings.providerId, providers],
+  );
+
+  const providerSelectData = useMemo(
+    () => buildProviderSelectData(providers, t),
+    [providers, t],
+  );
+
+  const showEndpointFields = providerRequiresEndpoint(
+    draftLlmSettings.providerId,
+    selectedProvider,
+  );
+  const isCopilot = draftLlmSettings.providerId === "copilot";
 
   const settingsBusy = ttsBusy;
+  const hasSavedKey = Boolean(llmSettings.apiKey.trim());
+  const draftUnchanged = settingsEqual(draftLlmSettings, llmSettings);
 
   return (
     <>
@@ -153,43 +236,133 @@ export function FrenchReaderSettingsButton() {
               onChange={(value) => setAiTargetLang(value ?? "zh")}
               disabled={settingsBusy}
             />
-            <PasswordInput
-              label={t("frenchReader.ai.apiKey", "Kimi API key")}
+
+            <Select
+              label={t("frenchReader.ai.provider", "LLM provider")}
               description={t(
-                "frenchReader.ai.apiKeyHint",
-                "Paste your Moonshot/Kimi key here. It is stored only in this browser. When empty, the server .env key is used.",
+                "frenchReader.ai.providerHint",
+                "Choose your model vendor, then paste the matching API key below.",
               )}
-              placeholder="sk-..."
-              value={draftApiKey}
-              onChange={(event) => setDraftApiKey(event.currentTarget.value)}
+              data={providerSelectData}
+              value={draftLlmSettings.providerId || defaultProviderId}
+              onChange={(value) =>
+                setDraftLlmSettings((prev) => ({
+                  ...prev,
+                  providerId: value || defaultProviderId,
+                }))
+              }
+              searchable
+              nothingFoundMessage={t("frenchReader.ai.noProviders", "No providers found")}
               disabled={settingsBusy}
             />
+
+            {selectedProvider?.default_model && !showEndpointFields ? (
+              <Text size="xs" c="dimmed">
+                {t("frenchReader.ai.defaultModel", "Default model: {{model}}", {
+                  model: selectedProvider.default_model,
+                })}
+              </Text>
+            ) : null}
+
+            {showEndpointFields && (
+              <>
+                <TextInput
+                  label={
+                    isCopilot
+                      ? t("frenchReader.ai.azureEndpoint", "Azure endpoint URL")
+                      : t("frenchReader.ai.customBaseUrl", "Base URL")
+                  }
+                  placeholder={
+                    isCopilot
+                      ? "https://YOUR-RESOURCE.openai.azure.com"
+                      : "https://api.example.com/v1"
+                  }
+                  value={draftLlmSettings.customBaseUrl}
+                  onChange={(event) =>
+                    setDraftLlmSettings((prev) => ({
+                      ...prev,
+                      customBaseUrl: event.currentTarget.value,
+                    }))
+                  }
+                  disabled={settingsBusy}
+                />
+                <TextInput
+                  label={
+                    isCopilot
+                      ? t("frenchReader.ai.azureDeployment", "Deployment name")
+                      : t("frenchReader.ai.customModel", "Model")
+                  }
+                  placeholder={isCopilot ? "gpt-4o-mini" : "your-model-name"}
+                  value={draftLlmSettings.customModel}
+                  onChange={(event) =>
+                    setDraftLlmSettings((prev) => ({
+                      ...prev,
+                      customModel: event.currentTarget.value,
+                    }))
+                  }
+                  disabled={settingsBusy}
+                />
+              </>
+            )}
+
+            <PasswordInput
+              label={t("frenchReader.ai.apiKey", "API key")}
+              description={
+                selectedProvider?.key_hint ||
+                t(
+                  "frenchReader.ai.apiKeyHint",
+                  "Stored only in this browser. When empty, the server .env key is used.",
+                )
+              }
+              placeholder="sk-..."
+              value={draftLlmSettings.apiKey}
+              onChange={(event) =>
+                setDraftLlmSettings((prev) => ({
+                  ...prev,
+                  apiKey: event.currentTarget.value,
+                }))
+              }
+              disabled={settingsBusy}
+            />
+
+            {selectedProvider?.docs_url ? (
+              <Text size="xs" c="dimmed">
+                {t("frenchReader.ai.getApiKey", "Get an API key:")}{" "}
+                <Anchor href={selectedProvider.docs_url} target="_blank" rel="noreferrer">
+                  {selectedProvider.docs_url}
+                </Anchor>
+              </Text>
+            ) : null}
+
             <Group gap="xs">
               <Button
                 size="compact-xs"
                 variant="light"
-                onClick={() => setUserApiKey(draftApiKey)}
-                disabled={settingsBusy || draftApiKey.trim() === userApiKey.trim()}
+                onClick={() => saveLlmSettings(draftLlmSettings)}
+                disabled={settingsBusy || draftUnchanged}
               >
-                {t("frenchReader.ai.apiKeySave", "Save key")}
+                {t("frenchReader.ai.apiKeySave", "Save settings")}
               </Button>
               <Button
                 size="compact-xs"
                 variant="subtle"
                 color="red"
                 onClick={() => {
-                  clearUserApiKey();
-                  setDraftApiKey("");
+                  clearLlmSettings();
+                  setDraftLlmSettings(DEFAULT_USER_LLM_SETTINGS);
                 }}
-                disabled={settingsBusy || !userApiKey}
+                disabled={settingsBusy || !hasSavedKey}
               >
                 {t("frenchReader.ai.apiKeyClear", "Clear key")}
               </Button>
             </Group>
-            {userApiKey && (
+            {hasSavedKey && (
               <Text size="xs" c="dimmed">
-                {t("frenchReader.ai.apiKeySaved", "Saved key: {{masked}}", {
-                  masked: maskUserLlmApiKey(userApiKey),
+                {t("frenchReader.ai.apiKeySaved", "Saved: {{provider}} · {{masked}}", {
+                  provider:
+                    providers.find((item) => item.id === llmSettings.providerId)?.name ??
+                    llmSettings.providerId,
+                  masked: maskUserLlmApiKey(llmSettings.apiKey),
                 })}
               </Text>
             )}

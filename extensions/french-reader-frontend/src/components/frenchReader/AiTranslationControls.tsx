@@ -28,7 +28,7 @@ export function AiTranslationControls({ text }: AiTranslationControlsProps) {
     setTranslationForMode,
     aiModes,
     aiTargetLang,
-    userApiKey,
+    llmSettings,
   } = useFrenchReaderContext();
 
   const {
@@ -46,7 +46,7 @@ export function AiTranslationControls({ text }: AiTranslationControlsProps) {
     text,
     modes: aiModes,
     targetLang: aiTargetLang,
-    userApiKey,
+    llmSettings,
     onComplete: setTranslationForMode,
   });
 
@@ -77,7 +77,7 @@ export function AiTranslationControls({ text }: AiTranslationControlsProps) {
       <Alert color="yellow" variant="light" title={t("frenchReader.ai.unavailable", "AI unavailable")}>
         {t(
           "frenchReader.ai.unavailableHint",
-          "Set FRENCH_READER_LLM_API_KEY in .env on the engine, or paste your Kimi API key in Settings (gear icon).",
+          "Set FRENCH_READER_LLM_API_KEY in .env on the engine, or choose a provider and paste your API key in Settings (gear icon).",
         )}
         {aiDetail ? ` (${aiDetail})` : ""}
       </Alert>
