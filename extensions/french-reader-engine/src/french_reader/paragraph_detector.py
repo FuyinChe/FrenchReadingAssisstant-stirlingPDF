@@ -75,11 +75,22 @@ def _median(values: list[int | float]) -> float:
 
 def _page_has_illustrations(rgb, gray) -> bool:
     import cv2
+    import numpy as np
 
     hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
     saturation = hsv[:, :, 1]
     colorful = (saturation > 55).mean()
     contrast = float(gray.std())
+
+    split = int(gray.shape[0] * 0.45)
+    bottom_gray = gray[split:, :]
+    bottom_sat = saturation[split:, :]
+    if bottom_gray.size > 0:
+        if (bottom_sat > 35).mean() > 0.025:
+            return True
+        if (bottom_gray < 130).mean() > 0.045:
+            return True
+
     return colorful > 0.045 or contrast > 62.0
 
 
@@ -623,11 +634,11 @@ def _expand_paragraph_bbox(
 ) -> tuple[int, int, int, int]:
     if illustrated:
         pad_left = max(10, int(img_w * 0.02))
-        pad_right = max(18, int(img_w * 0.038))
+        pad_right = max(28, int(img_w * 0.055))
         pad_y = max(8, int(img_h * 0.014))
     else:
         pad_left = max(8, int(img_w * 0.018))
-        pad_right = max(12, int(img_w * 0.028))
+        pad_right = max(20, int(img_w * 0.04))
         pad_y = max(6, int(img_h * 0.012))
 
     x = max(0, x - pad_left)
@@ -635,6 +646,65 @@ def _expand_paragraph_bbox(
     x2 = min(img_w, x + bw + pad_left + pad_right)
     y2 = min(img_h, y + bh + 2 * pad_y)
     return x, y, x2 - x, y2 - y
+
+
+def _snap_paragraph_right_edge(
+    gray,
+    x: int,
+    y: int,
+    bw: int,
+    bh: int,
+    img_w: int,
+    *,
+    min_right: int | None = None,
+) -> tuple[int, int, int, int]:
+    """Extend the right edge toward faint punctuation using raw grayscale ink."""
+    import numpy as np
+
+    if bw <= 0 or bh <= 0:
+        return x, y, bw, bh
+
+    y = max(0, y)
+    x = max(0, x)
+    bh = min(bh, gray.shape[0] - y)
+    bw = min(bw, gray.shape[1] - x)
+    if bh <= 0 or bw <= 0:
+        return x, y, bw, bh
+
+    max_extend = max(32, int(img_w * 0.095))
+    scan_x2 = min(gray.shape[1], x + bw + max_extend)
+    region = gray[y : y + bh, x:scan_x2]
+    if region.size == 0:
+        return x, y, bw, bh
+
+    bg = float(np.median(region))
+    dark_threshold = min(210, max(80, int(bg - 30)))
+    col_dark = np.sum(region < dark_threshold, axis=0)
+    peak = float(col_dark.max()) if col_dark.size else 0.0
+    if peak <= 0:
+        return x, y, bw, bh
+
+    threshold = max(1.0, peak * 0.025)
+    start_col = max(bw - 1, (min_right - x) if min_right is not None else bw - 1)
+    start_col = min(start_col, col_dark.size - 1)
+    extended = start_col
+    gap = 0
+    max_gap = max(8, int(img_w * 0.02))
+
+    for col in range(start_col, col_dark.size):
+        if col_dark[col] >= threshold:
+            extended = col
+            gap = 0
+        elif gap < max_gap:
+            gap += 1
+        else:
+            break
+
+    new_w = max(bw, extended + 1)
+    if min_right is not None:
+        new_w = max(new_w, min_right - x)
+    new_w = min(new_w, scan_x2 - x)
+    return x, y, new_w, bh
 
 
 def _refine_picture_book_paragraph_bbox(
@@ -664,7 +734,7 @@ def _refine_picture_book_paragraph_bbox(
     lx, ly, lw, lh = _union_bbox([line.as_tuple() for line in local_lines])
 
     scan_pad_left = max(10, int(img_w * 0.02))
-    scan_pad_right = max(20, int(img_w * 0.045))
+    scan_pad_right = max(32, int(img_w * 0.07))
     scan_pad_y = max(8, int(img_h * 0.012))
     rx = max(0, lx - scan_pad_left)
     ry = max(0, ly - scan_pad_y)
@@ -681,7 +751,7 @@ def _refine_picture_book_paragraph_bbox(
         return _expand_paragraph_bbox(*global_box, img_w, img_h, illustrated=True)
 
     peak_col = float(col_ink.max()) if col_ink.size else 0.0
-    col_threshold = max(1.0, peak_col * 0.06)
+    col_threshold = max(1.0, peak_col * 0.035)
     strong_cols = np.flatnonzero(col_ink >= col_threshold)
     if strong_cols.size == 0:
         strong_cols = np.flatnonzero(col_ink > 0)
@@ -690,6 +760,8 @@ def _refine_picture_book_paragraph_bbox(
 
     left_col = int(strong_cols[0])
     right_col = int(strong_cols[-1])
+    line_right = max(line.x2 for line in lines) - x0 - rx
+    right_col = max(right_col, line_right - 1)
     top_row = int(active_rows[0])
     bottom_row = int(active_rows[-1])
 
@@ -697,6 +769,15 @@ def _refine_picture_book_paragraph_bbox(
     fy = y0 + ry + top_row
     fw = right_col - left_col + 1
     fh = bottom_row - top_row + 1
+    fx, fy, fw, fh = _snap_paragraph_right_edge(
+        gray,
+        fx,
+        fy,
+        fw,
+        fh,
+        img_w,
+        min_right=max(line.x2 for line in lines),
+    )
     return _expand_paragraph_bbox(fx, fy, fw, fh, img_w, img_h, illustrated=True)
 
 
@@ -911,20 +992,38 @@ def _extend_text_run_width(band, local_x: int, local_w: int) -> int:
     import numpy as np
 
     col_ink = np.sum(band > 0, axis=0)
+    peak = float(col_ink.max()) if col_ink.size else 0.0
+    if peak <= 0:
+        return local_w
+
+    strong_threshold = max(1.0, peak * 0.08)
+    weak_threshold = max(1.0, peak * 0.025)
     right = local_x + local_w - 1
-    max_extend = max(12, int(band.shape[1] * 0.028))
+    max_extend = max(20, int(band.shape[1] * 0.08))
     hard_limit = min(band.shape[1] - 1, right + max_extend)
     extended_right = right
     gap = 0
-    max_gap = max(3, int(band.shape[1] * 0.008))
+    max_gap = max(5, int(band.shape[1] * 0.018))
+
     for col in range(right + 1, hard_limit + 1):
-        if col_ink[col] > 0:
+        ink_value = col_ink[col]
+        if ink_value >= weak_threshold or (
+            ink_value >= strong_threshold and col <= right + max(8, int(band.shape[1] * 0.02))
+        ):
             extended_right = col
             gap = 0
         elif gap < max_gap:
             gap += 1
         else:
             break
+
+    # Include trailing punctuation sitting just after the last strong column.
+    for col in range(extended_right + 1, min(hard_limit + 1, extended_right + max_gap + 1)):
+        if col_ink[col] >= weak_threshold:
+            extended_right = col
+        elif col_ink[col] == 0:
+            break
+
     return extended_right - local_x + 1
 
 
@@ -998,6 +1097,10 @@ def _score_picture_book_zone(
     score += min(median_w / img_w, 0.55) * 12
     score -= width_spread * 12
 
+    thin_limit = max(16, int(img_h * 0.022))
+    thick_ratio = sum(1 for line in lines if line.h > thin_limit) / len(lines)
+    score *= max(0.05, 1.0 - thick_ratio * 1.6)
+
     if 0.14 <= median_w / img_w <= 0.48:
         score += 10
     if len(lines) >= 4:
@@ -1029,6 +1132,94 @@ def _score_picture_book_zone(
     return max(0.0, score)
 
 
+def _expand_line_right_from_gray(gray, line: _TextLine, img_w: int) -> _TextLine:
+    _, _, expanded_w, _ = _snap_paragraph_right_edge(
+        gray,
+        line.x,
+        line.y,
+        line.w,
+        line.h,
+        img_w,
+        min_right=line.x2,
+    )
+    return _TextLine(x=line.x, y=line.y, w=expanded_w, h=line.h)
+
+
+def _lines_look_like_text_block(lines: list[_TextLine], img_w: int, img_h: int) -> bool:
+    if len(lines) < 3:
+        return False
+
+    thin_limit = max(16, int(img_h * 0.022))
+    thin_lines = [line for line in lines if line.h <= thin_limit]
+    if len(thin_lines) < 3:
+        return False
+    if len(thin_lines) / len(lines) < 0.65:
+        return False
+
+    heights = [line.h for line in thin_lines]
+    widths = [line.w for line in thin_lines]
+    median_h = _median(heights)
+    median_w = _median(widths)
+
+    if median_h > max(18, img_h * 0.028):
+        return False
+    if median_w < img_w * 0.14:
+        return False
+    if median_w > img_w * 0.62:
+        return False
+
+    height_spread = _median([abs(height - median_h) / max(median_h, 1) for height in heights])
+    width_spread = _median([abs(width - median_w) / max(median_w, 1) for width in widths])
+    if height_spread > 0.55:
+        return False
+    if width_spread > 0.42:
+        return False
+    return True
+
+
+def _should_use_picture_book_detector(
+    rgb,
+    gray,
+    img_w: int,
+    img_h: int,
+) -> bool:
+    if _page_has_illustrations(rgb, gray):
+        return True
+
+    margin_x = max(8, int(img_w * 0.035))
+    top_y1 = int(img_h * 0.43)
+    bottom_y0 = int(img_h * 0.52)
+    top_lines = _detect_lines_in_text_zone(
+        gray,
+        margin_x,
+        0,
+        img_w - margin_x,
+        top_y1,
+        img_w,
+        img_h,
+    )
+    if not _lines_look_like_text_block(top_lines, img_w, img_h) or len(top_lines) > 7:
+        return False
+
+    top_span = max(line.y2 for line in top_lines) - min(line.y for line in top_lines)
+    if top_span > img_h * 0.17:
+        return False
+
+    bottom_lines = _detect_lines_in_text_zone(
+        gray,
+        margin_x,
+        bottom_y0,
+        img_w - margin_x,
+        img_h,
+        img_w,
+        img_h,
+    )
+    if _lines_look_like_text_block(bottom_lines, img_w, img_h):
+        return False
+
+    return True
+
+
 def _detect_picture_book_paragraphs(
     gray,
     img_w: int,
@@ -1045,11 +1236,16 @@ def _detect_picture_book_paragraphs(
     candidates: list[tuple[float, BubbleDetection]] = []
     for x0, y0, x1, y1 in zones:
         lines = _detect_lines_in_text_zone(gray, x0, y0, x1, y1, img_w, img_h)
+        if not _lines_look_like_text_block(lines, img_w, img_h):
+            continue
+        zone_group = [
+            _expand_line_right_from_gray(gray, line, img_w)
+            for line in sorted(lines, key=lambda item: item.y)
+        ]
         zone_score = _score_picture_book_zone(lines, y0, y1, img_w, img_h)
         if zone_score < 3 or len(lines) < 2:
             continue
 
-        zone_group = sorted(lines, key=lambda line: line.y)
         ex, ey, ew, eh = _refine_picture_book_paragraph_bbox(
             gray,
             x0,
@@ -1092,6 +1288,18 @@ def detect_text_paragraphs(
 ) -> list[BubbleDetection]:
     """Detect prose paragraph blocks by clustering validated text lines."""
     try:
+        from french_reader.paragraph_tesseract import try_detect_paragraphs_tesseract
+
+        tess_detections = try_detect_paragraphs_tesseract(
+            image,
+            confidence_threshold=confidence_threshold,
+        )
+        if tess_detections:
+            return tess_detections
+    except Exception:
+        logger.debug("Tesseract paragraph layout unavailable, falling back to OpenCV", exc_info=True)
+
+    try:
         import cv2
         import numpy as np
     except ImportError as exc:
@@ -1105,7 +1313,7 @@ def detect_text_paragraphs(
     gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
     illustrated = _page_has_illustrations(arr, gray)
 
-    if illustrated:
+    if _should_use_picture_book_detector(arr, gray, img_w, img_h):
         return _detect_picture_book_paragraphs(
             gray,
             img_w,
@@ -1154,9 +1362,12 @@ def detect_text_paragraphs_from_base64(
     confidence_threshold: float = 0.35,
     preprocess: bool = False,
 ) -> list[BubbleDetection]:
-    from french_reader.bubble_detector import _decode_image, preprocess_comic_page
+    from french_reader.bubble_detector import _decode_image, preprocess_paragraph_page
 
     image = _decode_image(image_base64)
     if preprocess:
-        image = preprocess_comic_page(image)
-    return detect_text_paragraphs(image, confidence_threshold=confidence_threshold)
+        image = preprocess_paragraph_page(image)
+    return detect_text_paragraphs(
+        image,
+        confidence_threshold=confidence_threshold,
+    )

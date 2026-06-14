@@ -109,7 +109,7 @@ def _two_column_prose_page() -> Image.Image:
 def test_detects_multiple_paragraph_blocks_on_synthetic_page():
     detections = detect_text_paragraphs(_synthetic_prose_page(), confidence_threshold=0.3)
     assert len(detections) == 3
-    assert all(item.detector == "opencv-paragraph" for item in detections)
+    assert all(item.detector in {"opencv-paragraph", "tesseract-paragraph"} for item in detections)
 
 
 def test_paragraph_boxes_are_multi_line_not_single_words():
@@ -176,7 +176,78 @@ def _pdf_like_prose_page() -> Image.Image:
 def test_pdf_like_page_detects_multiple_paragraphs():
     detections = detect_text_paragraphs(_pdf_like_prose_page(), confidence_threshold=0.3)
     assert len(detections) >= 2
-    assert all(item.detector == "opencv-paragraph" for item in detections)
+    assert all(item.detector in {"opencv-paragraph", "tesseract-paragraph"} for item in detections)
+
+
+def _picture_book_text_with_illustration_page() -> Image.Image:
+    image = Image.new("RGB", (800, 1000), color="white")
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.load_default()
+
+    y = 40
+    for line in [
+        "Ca ne se passe pas toujours ainsi.",
+        "La mamie de Leon, un copain d'Alice, a prefere",
+        "que son corps soit incinere plutot qu'enterre.",
+        "Le corps est brule, et les cendres sont conservees",
+        "dans une sorte de boite, une urne.",
+    ]:
+        draw.text((60, y), line, fill=(30, 30, 30), font=font)
+        y += 28
+
+    draw.rectangle((300, 600, 500, 640), fill=(25, 45, 110))
+    draw.ellipse((320, 620, 480, 820), fill=(25, 45, 110))
+    return image
+
+
+def test_picture_book_page_prefers_text_over_illustration():
+    detections = detect_text_paragraphs(
+        _picture_book_text_with_illustration_page(),
+        confidence_threshold=0.3,
+    )
+    assert len(detections) == 1
+    box = detections[0].bbox
+    assert box.y + box.h < 0.55
+
+
+def test_picture_book_right_boundary_covers_line_endings():
+    detections = detect_text_paragraphs(
+        _picture_book_text_with_illustration_page(),
+        confidence_threshold=0.3,
+    )
+    box = detections[0].bbox
+    assert box.x + box.w >= 0.38
+    assert box.h >= 0.12
+
+
+def test_picture_book_wide_lines_extend_to_right_margin():
+    image = Image.new("RGB", (800, 520), color="white")
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.load_default()
+    y = 36
+    for line in [
+        "La mamie de Leon, un copain d'Alice, a prefere que son corps",
+        "soit incinere plutot qu'enterre. Le corps est brule, et les",
+        "cendres sont conservees dans une sorte de boite, une urne.",
+    ]:
+        draw.text((56, y), line, fill=(25, 25, 25), font=font)
+        y += 30
+
+    detections = detect_text_paragraphs(image, confidence_threshold=0.3)
+    assert len(detections) == 1
+    box = detections[0].bbox
+    assert box.x + box.w >= 0.44
+
+
+def test_paragraph_preprocess_keeps_text_block():
+    from french_reader.bubble_detector import preprocess_paragraph_page
+
+    image = preprocess_paragraph_page(_picture_book_text_with_illustration_page())
+    detections = detect_text_paragraphs(image, confidence_threshold=0.3)
+    assert len(detections) == 1
+    box = detections[0].bbox
+    assert box.y + box.h < 0.55
+    assert box.x + box.w >= 0.38
 
 
 def _picture_book_fixture_paths():

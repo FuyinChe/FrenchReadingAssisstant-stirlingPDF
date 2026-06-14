@@ -21,15 +21,79 @@ interface OcrRegionResponse {
   lines: { text: string; confidence: number }[];
 }
 
+interface FastApiValidationError {
+  loc?: (string | number)[];
+  msg?: string;
+}
+
 async function readErrorDetail(response: Response): Promise<string> {
   let detail = response.statusText;
   try {
-    const body = (await response.json()) as { detail?: string };
-    if (body.detail) detail = body.detail;
+    const body = (await response.json()) as {
+      detail?: string | FastApiValidationError[];
+    };
+    if (typeof body.detail === "string") {
+      detail = body.detail;
+    } else if (Array.isArray(body.detail)) {
+      detail = body.detail
+        .map((item) => {
+          if (typeof item === "string") return item;
+          const path = item.loc?.slice(1).join(".") ?? "request";
+          return `${path}: ${item.msg ?? "invalid"}`;
+        })
+        .join("; ");
+    }
   } catch {
     // ignore parse errors
   }
   return detail || "Request failed";
+}
+
+const EXPORT_MODES = ["translate", "vocabulary", "grammar"] as const;
+
+function normalizeExportConfidence(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  let confidence = value;
+  if (confidence > 1) confidence /= 100;
+  return Math.min(1, Math.max(0, confidence));
+}
+
+function sanitizeExportTranslations(
+  translations?: OcrHistoryEntry["translations"],
+): Partial<Record<(typeof EXPORT_MODES)[number], string>> | undefined {
+  if (!translations) return undefined;
+  const out: Partial<Record<(typeof EXPORT_MODES)[number], string>> = {};
+  for (const mode of EXPORT_MODES) {
+    const text = translations[mode]?.trim();
+    if (text) out[mode] = text;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+function serializeHistoryExportEntries(entries: OcrHistoryEntry[]) {
+  return entries.flatMap((entry) => {
+    const text = entry.text?.trim() ?? "";
+    if (!text) return [];
+
+    const translationMode =
+      entry.translationMode && EXPORT_MODES.includes(entry.translationMode)
+        ? entry.translationMode
+        : undefined;
+
+    return [
+      {
+        id: entry.id,
+        created_at: entry.createdAt,
+        file_name: entry.fileName || "document",
+        page: Math.max(1, entry.page || 1),
+        text,
+        confidence: normalizeExportConfidence(entry.confidence),
+        translations: sanitizeExportTranslations(entry.translations),
+        translation: entry.translation?.trim() || undefined,
+        translation_mode: translationMode,
+      },
+    ];
+  });
 }
 
 export async function ocrRegion(
@@ -237,22 +301,17 @@ export async function exportHistoryPdf(params: {
   sourceFileName: string;
   entries: OcrHistoryEntry[];
 }): Promise<Blob> {
+  const entries = serializeHistoryExportEntries(params.entries);
+  if (entries.length === 0) {
+    throw new Error("No history entries with recognized text to export");
+  }
+
   const response = await fetch(`${API_BASE}/export/pdf`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      source_file_name: params.sourceFileName,
-      entries: params.entries.map((entry) => ({
-        id: entry.id,
-        created_at: entry.createdAt,
-        file_name: entry.fileName,
-        page: entry.page,
-        text: entry.text,
-        confidence: entry.confidence,
-        translations: entry.translations,
-        translation: entry.translation,
-        translation_mode: entry.translationMode,
-      })),
+      source_file_name: params.sourceFileName.trim() || "notes",
+      entries,
     }),
   });
 

@@ -61,3 +61,32 @@ def test_export_pdf_rejects_empty_entries():
         json={"source_file_name": "demo.pdf", "entries": []},
     )
     assert response.status_code == 422
+
+
+def test_export_pdf_skips_blank_text_entries():
+    response = client.post(
+        "/french-reader/export/pdf",
+        json={
+            "source_file_name": "demo.pdf",
+            "entries": [
+                {
+                    "id": "1",
+                    "created_at": "2026-06-13T10:00:00",
+                    "file_name": "demo.pdf",
+                    "page": 1,
+                    "text": "   ",
+                    "confidence": 0.9,
+                },
+                {
+                    "id": "2",
+                    "created_at": "2026-06-13T10:00:00",
+                    "file_name": "demo.pdf",
+                    "page": 1,
+                    "text": "Salut!",
+                    "confidence": 95,
+                },
+            ],
+        },
+    )
+    assert response.status_code == 200
+    assert response.content.startswith(b"%PDF")

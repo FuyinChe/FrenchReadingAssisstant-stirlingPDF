@@ -24,7 +24,7 @@ export function useParagraphDetection() {
     fetchParagraphDetectorStatus()
       .then((status) => {
         if (!cancelled) {
-          setParagraphDetectorReady(status.ready);
+          setParagraphDetectorReady(status.opencv_available);
         }
       })
       .catch(() => {

@@ -1,6 +1,8 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+_AI_MODES = frozenset({"translate", "vocabulary", "grammar"})
 
 
 class BBox(BaseModel):
@@ -80,6 +82,72 @@ class HistoryExportEntry(BaseModel):
 class HistoryExportRequest(BaseModel):
     source_file_name: str = Field(min_length=1)
     entries: list[HistoryExportEntry] = Field(min_length=1)
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_payload(cls, data: object) -> object:
+        if not isinstance(data, dict):
+            return data
+
+        source = str(data.get("source_file_name") or "").strip() or "notes"
+        cleaned_entries: list[dict] = []
+
+        for raw in data.get("entries") or []:
+            if not isinstance(raw, dict):
+                continue
+
+            text = str(raw.get("text") or "").strip()
+            if not text:
+                continue
+
+            try:
+                confidence = float(raw.get("confidence", 0))
+            except (TypeError, ValueError):
+                confidence = 0.0
+            if confidence > 1.0:
+                confidence /= 100.0
+            confidence = min(1.0, max(0.0, confidence))
+
+            translations = raw.get("translations")
+            if isinstance(translations, dict):
+                translations = {
+                    key: str(value).strip()
+                    for key, value in translations.items()
+                    if key in _AI_MODES and str(value).strip()
+                } or None
+            else:
+                translations = None
+
+            translation_mode = raw.get("translation_mode")
+            if translation_mode not in _AI_MODES:
+                translation_mode = None
+
+            translation = raw.get("translation")
+            if translation is not None:
+                translation = str(translation).strip() or None
+
+            try:
+                page = max(1, int(raw.get("page", 1)))
+            except (TypeError, ValueError):
+                page = 1
+
+            cleaned_entries.append(
+                {
+                    **raw,
+                    "text": text,
+                    "confidence": confidence,
+                    "translations": translations,
+                    "translation_mode": translation_mode,
+                    "translation": translation,
+                    "page": page,
+                    "file_name": str(raw.get("file_name") or "document"),
+                }
+            )
+
+        if not cleaned_entries:
+            raise ValueError("No history entries with recognized text to export")
+
+        return {"source_file_name": source, "entries": cleaned_entries}
 
 
 class AutoBubblesRequest(BaseModel):

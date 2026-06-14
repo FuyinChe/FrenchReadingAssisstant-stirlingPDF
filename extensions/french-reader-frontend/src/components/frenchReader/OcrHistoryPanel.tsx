@@ -102,14 +102,14 @@ export function OcrHistoryPanel({ sourceFileName }: OcrHistoryPanelProps) {
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
-              <Menu.Item onClick={() => exportHistory("txt", sourceFileName)}>
-                {t("frenchReader.history.exportTxt", "Export as .txt")}
+              <Menu.Item onClick={() => exportHistory("pdf", sourceFileName)}>
+                {t("frenchReader.history.exportPdf", "Export as .pdf")}
               </Menu.Item>
               <Menu.Item onClick={() => exportHistory("md", sourceFileName)}>
                 {t("frenchReader.history.exportMd", "Export as .md")}
               </Menu.Item>
-              <Menu.Item onClick={() => exportHistory("pdf", sourceFileName)}>
-                {t("frenchReader.history.exportPdf", "Export as .pdf")}
+              <Menu.Item onClick={() => exportHistory("txt", sourceFileName)}>
+                {t("frenchReader.history.exportTxt", "Export as .txt")}
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>

@@ -22,7 +22,6 @@ ocr-paddle = [
     "paddleocr>=2.9.0",
     "paddlepaddle>=2.6.0",
 ]
-# Alias kept for docs/scripts
 ocr = ["pytesseract>=0.3.10"]
 bubble = [
     "opencv-python-headless>=4.8.0",

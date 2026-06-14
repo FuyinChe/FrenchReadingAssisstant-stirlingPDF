@@ -195,6 +195,22 @@ def preprocess_comic_page(image: Image.Image) -> Image.Image:
     return Image.fromarray(rgb)
 
 
+def preprocess_paragraph_page(image: Image.Image) -> Image.Image:
+    """Mild contrast boost for paragraph detection — avoids blur that drops punctuation."""
+    try:
+        import cv2
+        import numpy as np
+    except ImportError as exc:
+        raise RuntimeError("OpenCV is required for paragraph preprocessing") from exc
+
+    arr = np.array(image)
+    gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
+    clahe = cv2.createCLAHE(clipLimit=1.8, tileGridSize=(8, 8))
+    enhanced = clahe.apply(gray)
+    rgb = cv2.cvtColor(enhanced, cv2.COLOR_GRAY2RGB)
+    return Image.fromarray(rgb)
+
+
 def _get_yolo_model(model_path: str):
     global _yolo_model
     if _yolo_model is None:

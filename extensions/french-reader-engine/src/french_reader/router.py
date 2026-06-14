@@ -17,6 +17,7 @@ from french_reader.config import settings
 from french_reader.ocr_availability import any_ocr_engine_ready, get_ocr_engine_status
 from french_reader.ocr_service import recognize_french
 from french_reader.export_service import build_history_pdf
+from french_reader.paragraph_availability import get_paragraph_detector_status
 from french_reader.paragraph_detector import detect_text_paragraphs_from_base64
 from french_reader.schemas import (
     AiExplainRequest,
@@ -57,7 +58,7 @@ async def status() -> dict[str, str | bool]:
         "phase": "M5-regions",
         "ocr_ready": any_ocr_engine_ready(),
         "bubble_ready": bubble_status.ready,
-        "paragraph_ready": bubble_status.opencv_available,
+        "paragraph_ready": get_paragraph_detector_status().ready,
         "tts_ready": True,
         "ai_ready": is_llm_configured(),
     }
@@ -133,21 +134,20 @@ async def ocr_auto_bubbles(body: AutoBubblesRequest) -> AutoBubblesResponse:
 
 @router.get("/ocr/paragraphs/status")
 async def paragraph_detector_status() -> dict[str, object]:
-    status = get_bubble_detector_status()
+    status = get_paragraph_detector_status()
     return {
-        "ready": status.opencv_available,
+        "ready": status.ready,
         "opencv_available": status.opencv_available,
-        "detail": status.detail if status.opencv_available else (
-            "Paragraph detection requires OpenCV. Run:\n"
-            "  cd extensions/french-reader-engine && uv sync --extra bubble"
+        "detail": status.detail if status.ready else (
+            "Paragraph detection requires OpenCV (--extra bubble)."
         ),
     }
 
 
 @router.post("/ocr/auto-paragraphs", response_model=AutoParagraphsResponse)
 async def ocr_auto_paragraphs(body: AutoParagraphsRequest) -> AutoParagraphsResponse:
-    bubble_status = get_bubble_detector_status()
-    if not bubble_status.opencv_available:
+    status = get_paragraph_detector_status()
+    if not status.opencv_available:
         raise HTTPException(
             status_code=503,
             detail=(
@@ -173,7 +173,7 @@ async def ocr_auto_paragraphs(body: AutoParagraphsRequest) -> AutoParagraphsResp
 
     return AutoParagraphsResponse(
         page=body.page,
-        detector="opencv-paragraph",
+        detector=detections[0].detector if detections else "opencv-paragraph",
         preprocess=body.preprocess,
         paragraphs=[
             DetectedParagraph(
