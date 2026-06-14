@@ -9,7 +9,7 @@ BRANCH="${STIRLING_UPSTREAM_BRANCH:-main}"
 log() { printf '[sync-upstream] %s\n' "$*"; }
 die() { printf '[sync-upstream] ERROR: %s\n' "$*" >&2; exit 1; }
 
-[[ -d "${STIRLING}/.git" ]] || die "stirling-upstream submodule missing"
+[[ -e "${STIRLING}/.git" ]] || die "stirling-upstream submodule missing — run: git submodule update --init --recursive"
 
 log "Fetching Stirling-PDF origin/${BRANCH}..."
 git -C "${STIRLING}" fetch origin "${BRANCH}"

@@ -106,11 +106,11 @@
 
 | ID | 任务 | 产出 | 估时 | 状态 |
 |----|------|------|------|------|
-| TASK-M601 | Dockerfile 扩展层（基于 Stirling 镜像） | 部署 | 4h | [ ] |
-| TASK-M602 | Tauri 桌面包含 French Reader Tool | 桌面 | 6h | [ ] |
-| TASK-M603 | 执行一次 `sync-upstream.sh` 并记录冲突解决 | sync 日志 | 4h | [ ] |
-| TASK-M604 | 用户手册：在 Stirling 中使用 French Reader | user-guide | 3h | [ ] |
-| TASK-M605 | Sidecar 降级方案文档（零改 Stirling） | 备选 doc | 2h | [ ] |
+| TASK-M601 | Dockerfile 扩展层（基于 Stirling 镜像） | 部署 | 4h | [x] |
+| TASK-M602 | Tauri 桌面包含 French Reader Tool | 桌面 | 6h | [x] |
+| TASK-M603 | 执行一次 `sync-upstream.sh` 并记录冲突解决 | sync 日志 | 4h | [x] |
+| TASK-M604 | 用户手册：在 Stirling 中使用 French Reader | user-guide | 3h | [x] |
+| TASK-M605 | Sidecar 降级方案文档（零改 Stirling） | 备选 doc | 2h | [x] |
 
 ---
 

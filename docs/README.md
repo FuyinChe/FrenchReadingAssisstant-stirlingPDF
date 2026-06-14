@@ -16,10 +16,14 @@ docs/
 │   ├── 06-stirling-integration-strategy.md
 │   └── 07-license-compliance.md
 ├── dev-setup.md              # 开发环境搭建
+├── user-guide.md             # 用户使用手册（M6）
+├── deployment/
+│   └── sidecar-fallback.md   # Sidecar 降级部署
 └── development/
     ├── README.md
     ├── backlog.md            # 可执行任务清单（主 backlog）
-    └── progress.md           # 进度追踪与周报
+    ├── progress.md           # 进度追踪与周报
+    └── sync-log.md           # 上游同步记录（M603）
 ```
 
 ## 阅读顺序（新成员 onboarding）
@@ -31,8 +35,10 @@ docs/
 5. **[Stirling 集成策略](plan/06-stirling-integration-strategy.md)** — 插件挂载、目录、触点
 6. [里程碑](plan/05-milestones.md) — 阶段目标与验收标准
 7. [开发环境](dev-setup.md) — Stirling + 扩展安装启动
-8. [任务 Backlog](development/backlog.md) — 可执行工作项
-9. [进度追踪](development/progress.md) — 当前状态
+8. [用户手册](user-guide.md) — 框选、OCR、TTS、AI、导出
+9. [任务 Backlog](development/backlog.md) — 可执行工作项
+10. [进度追踪](development/progress.md) — 当前状态
+11. [Docker / 桌面部署](dev-setup.md#docker-部署m6) — M6 打包
 
 ## 文档维护约定
 

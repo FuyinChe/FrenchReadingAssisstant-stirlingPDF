@@ -44,7 +44,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/french_reader"]
-force-include = { "src/french_reader/assets" = "french_reader/assets" }
 
 [tool.ruff]
 line-length = 100

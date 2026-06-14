@@ -1,0 +1,31 @@
+# Git / IDE
+.git
+.gitmodules
+.cursor
+.idea
+.vscode
+
+# Local secrets and env
+.env
+.env.*
+!.env.docker.example
+
+# Docs and tests (not needed in runtime images)
+docs/
+**/.pytest_cache
+**/.ruff_cache
+**/__pycache__
+
+# Stirling build artifacts and caches
+stirling-upstream/**/node_modules
+stirling-upstream/**/.gradle
+stirling-upstream/**/build
+stirling-upstream/**/.task
+stirling-upstream/frontend/editor/dist
+stirling-upstream/frontend/editor/src-tauri/target
+
+# Engine dev artifacts (sidecar image installs deps in-container)
+extensions/french-reader-engine/.venv
+
+# Regression screenshots (large, not needed for build)
+extensions/french-reader-engine/tests/fixtures

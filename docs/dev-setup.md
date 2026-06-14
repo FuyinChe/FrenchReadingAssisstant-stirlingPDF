@@ -156,6 +156,28 @@ Stirling 全量检查（耗时，可选）：
 cd stirling-upstream && task check
 ```
 
+## Docker 部署（M6）
+
+```bash
+cp .env.docker.example .env    # 可选
+./scripts/docker-up.sh         # 或 ./scripts/docker-build.sh 仅构建
+```
+
+- 三服务：`stirling`（含 French Reader UI）+ `french-reader-engine` + `gateway`
+- 对外端口：`8080`（可通过 `FRENCH_READER_HTTP_PORT` 修改）
+- 首次构建 Stirling 扩展镜像可能需 30–60 分钟
+
+详见 [user-guide.md](user-guide.md)、[deployment/sidecar-fallback.md](deployment/sidecar-fallback.md)。
+
+## 桌面版（M6）
+
+```bash
+./scripts/build-desktop.sh     # Tauri 生产包
+./scripts/desktop-dev.sh       # 开发（自动启动 sidecar :5002）
+```
+
+桌面模式需设置 `VITE_FRENCH_READER_API_URL=http://127.0.0.1:5002/french-reader`（脚本已默认）。
+
 ## 同步上游
 
 ```bash
@@ -163,6 +185,8 @@ cd stirling-upstream && task check
 ```
 
 冲突时进入 `stirling-upstream/` 手动解决，再执行 `./scripts/install-extensions.sh`。
+
+记录见 [development/sync-log.md](development/sync-log.md)。
 
 ## 架构要点
 

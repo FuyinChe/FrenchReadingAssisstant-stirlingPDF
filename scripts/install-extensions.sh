@@ -55,21 +55,25 @@ else
 fi
 
 # --- Engine: sidecar service (no Stirling engine core changes) ---
-if [[ "${ENABLED}" == "true" ]]; then
+if [[ "${FRENCH_READER_SKIP_ENGINE_INSTALL:-}" == "true" ]]; then
+  log "FRENCH_READER_SKIP_ENGINE_INSTALL=true — skipped engine Python deps (Docker Stirling build)"
+elif [[ "${ENABLED}" == "true" ]]; then
   if ! command -v tesseract >/dev/null 2>&1; then
     log "Tesseract not found — run: ./scripts/setup-ocr.sh"
   fi
+  log "Installing French Reader engine Python deps..."
+  (
+    cd "${EXT_ENGINE}"
+    if command -v uv >/dev/null 2>&1; then
+      uv sync --dev --extra bubble
+    else
+      python3 -m pip install -e . 2>/dev/null || true
+    fi
+  )
+  log "French Reader engine runs as sidecar on port 5002 (see scripts/dev.sh)"
+else
+  log "FRENCH_READER_ENABLED=false — skipped engine install"
 fi
-log "Installing French Reader engine Python deps..."
-(
-  cd "${EXT_ENGINE}"
-  if command -v uv >/dev/null 2>&1; then
-    uv sync --dev --extra bubble
-  else
-    python3 -m pip install -e . 2>/dev/null || true
-  fi
-)
-log "French Reader engine runs as sidecar on port 5002 (see scripts/dev.sh)"
 
 date -u +"%Y-%m-%dT%H:%M:%SZ" > "${MARKER}"
 log "Done. Marker written to ${MARKER}"

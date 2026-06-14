@@ -1,0 +1,87 @@
+# FrenchPdfReader — full stack (M6)
+# Stirling (with French Reader Tool UI) + sidecar engine + gateway on :8080
+#
+#   cp .env.docker.example .env
+#   ./scripts/docker-up.sh
+#
+# First build can take 30–60 minutes (Stirling + JDK + frontend).
+
+services:
+  stirling:
+    build:
+      context: .
+      dockerfile: docker/stirling-extended/Dockerfile
+    container_name: french-pdf-reader-stirling
+    restart: unless-stopped
+    expose:
+      - "8080"
+    volumes:
+      - stirling-data:/usr/share/tessdata
+      - stirling-config:/configs
+      - stirling-logs:/logs
+    environment:
+      DISABLE_ADDITIONAL_FEATURES: "true"
+      SECURITY_ENABLELOGIN: "false"
+      SYSTEM_DEFAULTLOCALE: en-US
+      UI_APPNAME: FrenchPdfReader
+      UI_HOMEDESCRIPTION: Stirling PDF with French Reading Assistant
+      SYSTEM_MAXFILESIZE: "100"
+    networks:
+      - french-reader-net
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://localhost:8080$${SYSTEM_ROOTURIPATH:-}/api/v1/info/status | grep -q UP",
+        ]
+      interval: 30s
+      timeout: 15s
+      retries: 10
+      start_period: 120s
+
+  french-reader-engine:
+    build:
+      context: .
+      dockerfile: docker/french-reader-engine/Dockerfile
+    container_name: french-pdf-reader-engine
+    restart: unless-stopped
+    expose:
+      - "5002"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      FRENCH_READER_CORS_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
+    networks:
+      - french-reader-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:5002/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  gateway:
+    build:
+      context: .
+      dockerfile: docker/gateway/Dockerfile
+    container_name: french-pdf-reader-gateway
+    restart: unless-stopped
+    ports:
+      - "${FRENCH_READER_HTTP_PORT:-8080}:8080"
+    depends_on:
+      stirling:
+        condition: service_healthy
+      french-reader-engine:
+        condition: service_healthy
+    networks:
+      - french-reader-net
+
+networks:
+  french-reader-net:
+    driver: bridge
+
+volumes:
+  stirling-data:
+  stirling-config:
+  stirling-logs:

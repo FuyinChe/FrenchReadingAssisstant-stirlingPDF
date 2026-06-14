@@ -19,7 +19,9 @@
 | [架构设计](docs/plan/02-architecture.md) | 模块与 API |
 | [基座评估](docs/plan/04-base-framework-evaluation.md) | 为何选 Stirling |
 | [任务 Backlog](docs/development/backlog.md) | 可执行工作项 |
-| [进度追踪](docs/development/progress.md) | 当前状态 |
+| [用户手册](docs/user-guide.md) | French Reader 使用说明 |
+| [Sidecar 降级部署](docs/deployment/sidecar-fallback.md) | 零改 Stirling 的备选方案 |
+| [上游同步日志](docs/development/sync-log.md) | M603 sync 记录 |
 
 ## 技术方向
 
@@ -40,8 +42,22 @@ chmod +x scripts/*.sh
 ./scripts/dev.sh
 ```
 
-详见 [docs/dev-setup.md](docs/dev-setup.md)。
+| [进度追踪](docs/development/progress.md) | 当前状态 |
 
-## 状态
+## Docker 部署
 
-**M0 基本完成** — submodule、extensions、安装脚本、CI 已就绪；待本机验证 Stirling `task dev`。
+```bash
+cp .env.docker.example .env   # 可选：LLM Key
+./scripts/docker-up.sh        # 构建并启动（首次较慢）
+```
+
+浏览器打开 http://localhost:8080 → **French Reading Assistant**。
+
+## 桌面版（Tauri）
+
+```bash
+./scripts/build-desktop.sh    # 生产打包
+./scripts/desktop-dev.sh        # 开发（含 sidecar :5002）
+```
+
+详见 [用户手册](docs/user-guide.md)。

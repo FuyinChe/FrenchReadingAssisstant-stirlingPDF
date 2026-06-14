@@ -47,3 +47,13 @@ jobs:
           FRENCH_READER_ENABLED=true ./scripts/install-extensions.sh
           test -f stirling-upstream/frontend/editor/src/core/tools/frenchReader/FrenchReader.tsx
           test -f .extensions-installed
+
+  docker-compose-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Validate docker compose
+        run: docker compose config
