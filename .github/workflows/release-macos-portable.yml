@@ -143,8 +143,6 @@ jobs:
           test -x scripts/build-stirling-desktop-portable.sh
 
       - name: Build macOS portable zip (${{ matrix.platform }})
-        env:
-          CARGO_BUILD_TARGET: ${{ matrix.rust_target }}
         run: |
           chmod +x scripts/build-stirling-desktop-portable.sh
           ARGS=(--arch "${{ matrix.arch }}")

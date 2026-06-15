@@ -67,19 +67,16 @@ log "Staging Tesseract..."
 mkdir -p "${STAGING_DIR}/app"
 
 if [[ "${SKIP_DESKTOP}" != "true" ]]; then
-  RUST_TARGET=""
   if [[ "${ARCH_LABEL}" == "x64" ]]; then
     RUST_TARGET="x86_64-apple-darwin"
+  else
+    RUST_TARGET="aarch64-apple-darwin"
   fi
 
-  "${ROOT}/scripts/build-stirling-desktop-portable.sh" ${RUST_TARGET:+"${RUST_TARGET}"}
+  "${ROOT}/scripts/build-stirling-desktop-portable.sh" "${RUST_TARGET}"
 
   TAURI_TARGET_ROOT="${ROOT}/stirling-upstream/frontend/editor/src-tauri/target"
-  if [[ "${ARCH_LABEL}" == "x64" ]]; then
-    BUNDLE_MACOS="${TAURI_TARGET_ROOT}/x86_64-apple-darwin/release/bundle/macos"
-  else
-    BUNDLE_MACOS="${TAURI_TARGET_ROOT}/release/bundle/macos"
-  fi
+  BUNDLE_MACOS="${TAURI_TARGET_ROOT}/${RUST_TARGET}/release/bundle/macos"
   APP_SRC="$(find "${BUNDLE_MACOS}" -maxdepth 1 -name '*.app' 2>/dev/null | head -1)"
   if [[ -z "${APP_SRC}" ]]; then
     APP_SRC="$(find "${TAURI_TARGET_ROOT}" -path '*/bundle/macos/*.app' 2>/dev/null | head -1)"
