@@ -97,11 +97,14 @@ jobs:
           if (-not $tess) {
             throw "tesseract.exe not found. Checked: $($candidates -join ', ')"
           }
+          $tessExe = Join-Path $tess "tesseract.exe"
           "TESSDATA_PREFIX=$tess\tessdata" >> $env:GITHUB_ENV
+          "TESSERACT_HOME=$tess" >> $env:GITHUB_ENV
           $tess >> $env:GITHUB_PATH
           Write-Host "Using Tesseract at $tess"
-          tesseract --version
-          tesseract --list-langs
+          # GITHUB_PATH applies from the *next* step — use full path here.
+          & $tessExe --version
+          & $tessExe --list-langs
 
       - name: Verify build toolchain
         shell: pwsh
@@ -111,6 +114,7 @@ jobs:
           java -version
           cargo --version
           task --version
+          tesseract --version
 
       - name: Sync plugin version metadata
         run: python scripts/sync-plugin-version.py --platform windows-x64
