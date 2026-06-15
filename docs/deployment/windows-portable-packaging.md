@@ -166,7 +166,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\fetch-tesseract-windows.ps1
 |------|------|
 | `python3: command not found` | 已修复：`install-extensions.sh` 使用 `python` 回退 |
 | `Tesseract not found` | workflow 会搜索 Chocolatey 与 Program Files 路径 |
-| `task desktop:build` 失败 | 查看日志；确认 JDK 25、Rust、`task install` 成功 |
+| `task desktop:build` 失败 | 确认已安装 **uv**（`astral-sh/setup-uv`）、JDK 25、Rust、`task install` 成功 |
 | Node.js 20 弃用警告 | 可忽略；workflow 已设置 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` |
 
 ---
