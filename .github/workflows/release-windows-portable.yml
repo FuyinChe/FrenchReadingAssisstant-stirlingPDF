@@ -32,6 +32,13 @@ concurrency:
   group: release-windows-portable
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  FRENCH_READER_ENABLED: "true"
+  VITE_FRENCH_READER_ENABLED: "true"
+  VITE_FRENCH_READER_API_URL: http://127.0.0.1:5002/french-reader
+  FRENCH_READER_SKIP_ENGINE_INSTALL: "true"
+
 jobs:
   build-windows-portable:
     name: Build portable zip (Windows)
@@ -62,9 +69,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
-      - name: Setup Java 25
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -73,32 +80,43 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install Task (go-task)
-        run: choco install go-task -y --no-progress
-
-      - name: Install Tesseract OCR
-        run: choco install tesseract -y --no-progress
-
-      - name: Add Tesseract to PATH
+      - name: Install Chocolatey tools (Task, Tesseract)
         shell: pwsh
         run: |
-          $tess = "C:\Program Files\Tesseract-OCR"
-          if (Test-Path $tess) {
-            "TESSDATA_PREFIX=$tess\tessdata" >> $env:GITHUB_ENV
-            "$tess" >> $env:GITHUB_PATH
-          } else {
-            throw "Tesseract not found at $tess"
+          choco install go-task tesseract -y --no-progress
+          "C:\ProgramData\chocolatey\bin" >> $env:GITHUB_PATH
+
+      - name: Locate Tesseract OCR
+        shell: pwsh
+        run: |
+          $candidates = @(
+            "C:\Program Files\Tesseract-OCR",
+            "C:\ProgramData\chocolatey\lib\tesseract\tools"
+          )
+          $tess = $candidates | Where-Object { Test-Path (Join-Path $_ "tesseract.exe") } | Select-Object -First 1
+          if (-not $tess) {
+            throw "tesseract.exe not found. Checked: $($candidates -join ', ')"
           }
+          "TESSDATA_PREFIX=$tess\tessdata" >> $env:GITHUB_ENV
+          $tess >> $env:GITHUB_PATH
+          Write-Host "Using Tesseract at $tess"
           tesseract --version
           tesseract --list-langs
+
+      - name: Verify build toolchain
+        shell: pwsh
+        run: |
+          python --version
+          node --version
+          java -version
+          cargo --version
+          task --version
 
       - name: Sync plugin version metadata
         run: python scripts/sync-plugin-version.py --platform windows-x64
 
       - name: Install extensions into Stirling
         shell: bash
-        env:
-          FRENCH_READER_ENABLED: "true"
         run: |
           chmod +x scripts/*.sh
           ./scripts/install-extensions.sh
@@ -111,10 +129,6 @@ jobs:
 
       - name: Build Windows portable zip
         shell: pwsh
-        env:
-          FRENCH_READER_ENABLED: "true"
-          VITE_FRENCH_READER_ENABLED: "true"
-          VITE_FRENCH_READER_API_URL: http://127.0.0.1:5002/french-reader
         run: |
           $args = @()
           if ('${{ inputs.skip_desktop }}' -eq 'true') { $args += '-SkipDesktop' }

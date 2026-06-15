@@ -12,10 +12,17 @@ ENABLED="${FRENCH_READER_ENABLED:-true}"
 log() { printf '[install-extensions] %s\n' "$*"; }
 die() { printf '[install-extensions] ERROR: %s\n' "$*" >&2; exit 1; }
 
+PYTHON=""
 if command -v python3 >/dev/null 2>&1; then
-  python3 "${ROOT}/scripts/sync-plugin-version.py" || die "sync-plugin-version failed"
+  PYTHON=python3
+elif command -v python >/dev/null 2>&1; then
+  PYTHON=python
 else
-  log "python3 not found — skip version sync (run scripts/sync-plugin-version.py manually)"
+  die "python not found (install Python 3.11+)"
+fi
+
+if ! "$PYTHON" "${ROOT}/scripts/sync-plugin-version.py"; then
+  die "sync-plugin-version failed"
 fi
 
 [[ -d "${STIRLING}/frontend" ]] || die "stirling-upstream not found. Run: git submodule update --init --recursive"
@@ -54,7 +61,7 @@ if [[ "${ENABLED}" == "true" ]]; then
   cp "${EXT_FRONTEND}/patches/usePrototypeToolRegistry.tsx" \
     "${FE_CORE}/data/usePrototypeToolRegistry.tsx"
   log "Applied frontend registry patches (prototype tool + frenchReader id)"
-  python3 "${ROOT}/scripts/patch-vite-proxy.py" \
+  "$PYTHON" "${ROOT}/scripts/patch-vite-proxy.py" \
     "${STIRLING}/frontend/editor/vite.config.ts" || die "vite proxy patch failed"
 else
   log "FRENCH_READER_ENABLED=false — skipped frontend patches"
@@ -73,7 +80,7 @@ elif [[ "${ENABLED}" == "true" ]]; then
     if command -v uv >/dev/null 2>&1; then
       uv sync --dev --extra bubble
     else
-      python3 -m pip install -e . 2>/dev/null || true
+      "$PYTHON" -m pip install -e ".[bubble]" 2>/dev/null || "$PYTHON" -m pip install -e .
     fi
   )
   log "French Reader engine runs as sidecar on port 5002 (see scripts/dev.sh)"
@@ -81,5 +88,9 @@ else
   log "FRENCH_READER_ENABLED=false — skipped engine install"
 fi
 
-date -u +"%Y-%m-%dT%H:%M:%SZ" > "${MARKER}"
+if date -u +"%Y-%m-%dT%H:%M:%SZ" > "${MARKER}" 2>/dev/null; then
+  :
+else
+  "$PYTHON" -c "import datetime; print(datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))" > "${MARKER}"
+fi
 log "Done. Marker written to ${MARKER}"
