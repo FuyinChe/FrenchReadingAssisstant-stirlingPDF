@@ -66,6 +66,12 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13.8"
+          enable-cache: true
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -114,6 +120,7 @@ jobs:
           java -version
           cargo --version
           task --version
+          uv --version
           tesseract --version
 
       - name: Sync plugin version metadata
