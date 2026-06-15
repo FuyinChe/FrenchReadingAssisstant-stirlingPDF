@@ -57,6 +57,7 @@ export function OcrHistoryPanel({ sourceFileName }: OcrHistoryPanelProps) {
     history,
     currentEntryId,
     restoreHistoryEntry,
+    removeHistoryEntry,
     clearHistory,
     exportHistory,
     exportError,
@@ -154,12 +155,26 @@ export function OcrHistoryPanel({ sourceFileName }: OcrHistoryPanelProps) {
                 }}
               >
                 <Group justify="space-between" mb={4} wrap="nowrap">
-                  <Text size="xs" c="dimmed" lineClamp={1}>
+                  <Text size="xs" c="dimmed" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
                     {t("frenchReader.history.meta", "Page {{page}} · {{time}}", {
                       page: entry.page,
                       time: formatTime(entry.createdAt),
                     })}
                   </Text>
+                  <Tooltip label={t("frenchReader.history.deleteEntry", "Remove this entry")}>
+                    <Button
+                      size="compact-xs"
+                      variant="subtle"
+                      color="red"
+                      aria-label={t("frenchReader.history.deleteEntry", "Remove this entry")}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        removeHistoryEntry(entry.id);
+                      }}
+                    >
+                      <DeleteOutlineOutlinedIcon sx={{ fontSize: 14 }} />
+                    </Button>
+                  </Tooltip>
                 </Group>
                 <OcrTextBlock
                   text={entry.text}

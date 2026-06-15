@@ -34,6 +34,7 @@ import {
   exportHistoryAsMarkdown,
   exportHistoryAsText,
   loadOcrHistory,
+  removeOcrHistoryEntry,
   updateOcrHistoryTranslations,
 } from "@app/services/frenchReaderHistory";
 
@@ -57,6 +58,7 @@ interface FrenchReaderContextValue {
   }) => void;
   setTranslationForMode: (mode: AiExplainMode, text: string) => void;
   restoreHistoryEntry: (id: string) => void;
+  removeHistoryEntry: (id: string) => void;
   clearHistory: () => void;
   exportHistory: (format: "txt" | "md" | "pdf", sourceFileName: string) => Promise<void>;
   exportError: string | null;
@@ -192,6 +194,21 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
     [history],
   );
 
+  const removeHistoryEntry = useCallback(
+    (id: string) => {
+      const next = removeOcrHistoryEntry(id);
+      setHistory(next);
+      if (currentEntryId === id) {
+        setOcrResult(null);
+        setCurrentEntryId(null);
+        setCurrentTranslations({});
+        setOcrError(null);
+        ttsPlay.stop();
+      }
+    },
+    [currentEntryId, ttsPlay],
+  );
+
   const clearHistory = useCallback(() => {
     clearOcrHistory();
     setHistory([]);
@@ -247,6 +264,7 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
       recordOcrResult,
       setTranslationForMode,
       restoreHistoryEntry,
+      removeHistoryEntry,
       clearHistory,
       exportHistory,
       exportError,
@@ -303,6 +321,7 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
       recordOcrResult,
       setTranslationForMode,
       restoreHistoryEntry,
+      removeHistoryEntry,
       clearHistory,
       exportHistory,
       exportError,

@@ -91,6 +91,12 @@ export function clearOcrHistory(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
 
+export function removeOcrHistoryEntry(id: string): OcrHistoryEntry[] {
+  const next = readRaw().filter((entry) => entry.id !== id);
+  writeRaw(next);
+  return next;
+}
+
 function formatTimestamp(iso: string): string {
   try {
     return new Date(iso).toLocaleString();
