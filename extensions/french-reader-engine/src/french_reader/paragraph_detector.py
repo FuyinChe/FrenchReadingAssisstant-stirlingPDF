@@ -7,11 +7,9 @@ from PIL import Image
 
 from french_reader.bubble_detector import (
     BubbleDetection,
-    _expand_bbox,
     _merge_candidate_boxes,
     _normalize_bbox,
 )
-from french_reader.schemas import BBox
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +73,6 @@ def _median(values: list[int | float]) -> float:
 
 def _page_has_illustrations(rgb, gray) -> bool:
     import cv2
-    import numpy as np
 
     hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
     saturation = hsv[:, :, 1]
@@ -1043,7 +1040,6 @@ def _detect_lines_in_text_zone(
         return []
 
     min_line_w = max(48, int(img_w * 0.14))
-    max_line_w = int(img_w * 0.55)
     window = max(6, int(binary.shape[0] * 0.012))
     step = max(2, window // 3)
     raw_lines: list[_TextLine] = []
@@ -1401,7 +1397,6 @@ def detect_text_paragraphs(
     arr = np.array(image)
     img_h, img_w = arr.shape[:2]
     gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
-    illustrated = _page_has_illustrations(arr, gray)
 
     if _should_use_picture_book_detector(arr, gray, img_w, img_h):
         return _detect_picture_book_paragraphs(

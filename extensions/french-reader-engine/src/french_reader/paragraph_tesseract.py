@@ -270,7 +270,6 @@ def try_detect_picture_book_paragraphs_tesseract(
         ex, ey, ew, eh = _expand_paragraph_bbox(ex, ey, ew, eh, img_w, img_h, illustrated=True)
 
         zone_h = max(1, y1 - y0)
-        center_y = (ey + eh / 2) / img_h
         if y0 <= img_h * 0.05 and (ey - y0) / zone_h > 0.72:
             continue
         if y0 >= img_h * 0.5 and (ey + eh - y0) / zone_h < 0.28:
