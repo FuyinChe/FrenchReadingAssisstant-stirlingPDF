@@ -46,9 +46,9 @@ French-Reading-Assistant-0.5.0-macos-arm64/
 
 | 现象 | 处理 |
 |------|------|
-| `failed to bundle project: No such file or directory` | 勿用完整 `desktop:build`（会尝试 dmg/deb/msi 等）；便携脚本已改为仅 `--bundles app` |
-| `TAURI_SIGNING_PRIVATE_KEY` | 便携包设置 `createUpdaterArtifacts: false`，无需 Stirling 更新签名私钥 |
-| Intel (x64) 找不到 `.app` | x64 在 M 系列 Runner 上交叉编译，产物在 `target/x86_64-apple-darwin/release/bundle/macos/` |
+| `failed to bundle project: No such file or directory` | 勿用 `task desktop:build`；脚本使用 `npx tauri build --target … --bundles app`，并 `unset CARGO_BUILD_TARGET` |
+| Intel (x64) 找不到 `.app` | 产物在 `target/x86_64-apple-darwin/release/bundle/macos/` |
+| Apple Silicon (arm64) 打包失败 | 与 x64 相同，必须显式 `--target aarch64-apple-darwin`（不要只靠 `CARGO_BUILD_TARGET`） |
 
 ---
 
