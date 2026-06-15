@@ -120,7 +120,7 @@ ENV VERSION_TAG=$VERSION_TAG \
 
 LABEL org.opencontainers.image.title="FrenchPdfReader (Stirling extended)" \
       org.opencontainers.image.description="Stirling PDF with French Reading Assistant tool" \
-      org.opencontainers.image.source="https://github.com/fuyinche/FrenchPdfReader" \
+      org.opencontainers.image.source="https://github.com/FuyinChe/FrenchReadingAssisstant-stirlingPDF" \
       org.opencontainers.image.vendor="FrenchPdfReader" \
       org.opencontainers.image.version="${VERSION_TAG}"
 

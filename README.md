@@ -1,63 +1,98 @@
-# FrenchPdfReader
+# French Reading Assistant for Stirling PDF
 
-面向法语 PDF（尤其是漫画 / BD）的智能阅读增强模块，**以 [Stirling PDF](https://github.com/Stirling-Tools/Stirling-PDF) 为基座**，以插件形式挂载：区域框选 → 法语 OCR → 右侧 AI 面板 → TTS 朗读。
+> **Base application:** [**Stirling PDF**](https://github.com/Stirling-Tools/Stirling-PDF) — open-source PDF toolkit (merge, split, OCR, AI Agent, Tauri desktop, Docker, and more).  
+> **This repository** ([`FrenchReadingAssisstant-stirlingPDF`](https://github.com/FuyinChe/FrenchReadingAssisstant-stirlingPDF)) adds a **French Reading Assistant** plugin: region selection → French OCR → TTS → AI explanation. Stirling core behavior is unchanged; extensions live under `extensions/`.
 
-**不改动 Stirling 核心功能**；扩展代码隔离在 `extensions/`，通过新 Tool + sidecar engine（:5002）接入。
+> **基座应用：** [**Stirling PDF**](https://github.com/Stirling-Tools/Stirling-PDF) — 开源 PDF 工具集（合并、拆分、OCR、AI Agent、Tauri 桌面、Docker 等）。  
+> **本仓库**（[`FrenchReadingAssisstant-stirlingPDF`](https://github.com/FuyinChe/FrenchReadingAssisstant-stirlingPDF)）在其上挂载 **法语阅读助手** 插件：框选 → 法语 OCR → 朗读 → AI 释义。不改动 Stirling 核心；扩展代码位于 `extensions/`。
 
-## 功能概览
+| Language | 语言 | Documentation |
+|----------|------|---------------|
+| English | 英文 | [docs/en/getting-started.md](docs/en/getting-started.md) · [docs/en/user-guide.md](docs/en/user-guide.md) |
+| 中文 | Chinese | [docs/zh/getting-started.md](docs/zh/getting-started.md) · [docs/zh/user-guide.md](docs/zh/user-guide.md) |
+| Index | 文档中心 | [docs/README.md](docs/README.md) |
 
-- **Stirling PDF 全功能保留**：合并、拆分、转换、原生 OCR、AI Agent、Tauri 桌面等
-- **French Reader Tool**（新增）：框选法语区域、侧栏展示 OCR、TTS、AI 释义
-- **漫画增强**（规划）：YOLO 气泡自动检测
+---
 
-## 文档
+## Features / 功能
 
-| 文档 | 说明 |
-|------|------|
-| [文档中心](docs/README.md) | 导航 |
-| [Stirling 集成策略](docs/plan/06-stirling-integration-strategy.md) | **核心**：插件/Fork 方案 |
-| [架构设计](docs/plan/02-architecture.md) | 模块与 API |
-| [基座评估](docs/plan/04-base-framework-evaluation.md) | 为何选 Stirling |
-| [任务 Backlog](docs/development/backlog.md) | 可执行工作项 |
-| [用户手册](docs/user-guide.md) | French Reader 使用说明 |
-| [Sidecar 降级部署](docs/deployment/sidecar-fallback.md) | 零改 Stirling 的备选方案 |
-| [上游同步日志](docs/development/sync-log.md) | M603 sync 记录 |
+| | English | 中文 |
+|---|---------|------|
+| Base | Full **Stirling PDF** feature set | 保留 **Stirling PDF** 全部能力 |
+| Plugin | **French Reading Assistant** tool | **French Reading Assistant** 工具 |
+| OCR / TTS / AI | French OCR, edge-tts, multi-vendor LLM | 法语 OCR、edge-tts、多厂商 LLM |
+| Planned | YOLO bubble detection (comics) | 漫画气泡检测（规划中） |
 
-## 技术方向
+Upstream links: [Stirling PDF repo](https://github.com/Stirling-Tools/Stirling-PDF) · [Stirling docs](https://docs.stirlingpdf.com/) · [DeveloperGuide](https://github.com/Stirling-Tools/Stirling-PDF/blob/main/DeveloperGuide.md)
 
-```
-基座:      Stirling PDF (submodule → stirling-upstream/)
-扩展:      extensions/french-reader-frontend/  (React Tool)
-           extensions/french-reader-engine/    (FastAPI: OCR/TTS/AI)
-Python:    PaddleOCR (fr) + edge-tts
-集成原则:  命名空间隔离 + FRENCH_READER_ENABLED 开关 + 最小 patch
-```
+---
 
-## 快速开始
+## Quick start (development) / 快速开始（开发）
 
 ```bash
+git clone --recursive https://github.com/FuyinChe/FrenchReadingAssisstant-stirlingPDF.git
+cd FrenchReadingAssisstant-stirlingPDF
+# If you cloned without --recursive:
 git submodule update --init --recursive
 chmod +x scripts/*.sh
 ./scripts/install-extensions.sh
 ./scripts/dev.sh
 ```
 
-| [进度追踪](docs/development/progress.md) | 当前状态 |
+Open Stirling at http://localhost:5173 → **Recommended tools** → **French Reading Assistant**.
 
-## Docker 部署
+---
 
-```bash
-cp .env.docker.example .env   # 可选：LLM Key
-./scripts/docker-up.sh        # 构建并启动（首次较慢）
-```
+## Docker / Docker 部署
 
-浏览器打开 http://localhost:8080 → **French Reading Assistant**。
-
-## 桌面版（Tauri）
+Images are **built locally** from this repo (nothing is pushed to Docker Hub by default).
 
 ```bash
-./scripts/build-desktop.sh    # 生产打包
-./scripts/desktop-dev.sh        # 开发（含 sidecar :5002）
+cp .env.docker.example .env   # optional: LLM API key
+./scripts/docker-up.sh          # or: docker compose up --build
 ```
 
-详见 [用户手册](docs/user-guide.md)。
+Browser: http://localhost:8080 → **French Reading Assistant**.
+
+See [docs/en/getting-started.md#docker](docs/en/getting-started.md#docker) · [docs/zh/getting-started.md#docker](docs/zh/getting-started.md#docker).
+
+---
+
+## Desktop (Tauri) / 桌面版
+
+```bash
+./scripts/build-desktop.sh
+./scripts/desktop-dev.sh
+```
+
+Requires JDK 25, Node 20+, Rust (see [Stirling DeveloperGuide](https://github.com/Stirling-Tools/Stirling-PDF/blob/main/DeveloperGuide.md)).
+
+---
+
+## Documentation / 文档
+
+| Topic | EN | 中文 |
+|-------|----|------|
+| Getting started | [docs/en/getting-started.md](docs/en/getting-started.md) | [docs/zh/getting-started.md](docs/zh/getting-started.md) |
+| User guide (+ screenshots) | [docs/en/user-guide.md](docs/en/user-guide.md) | [docs/zh/user-guide.md](docs/zh/user-guide.md) |
+| Dev setup (detailed) | [docs/dev-setup.md](docs/dev-setup.md) | 同上（中英混排，偏开发者） |
+| Architecture / plan | [docs/plan/](docs/plan/) | 计划文档（中文为主） |
+| Sidecar fallback | [docs/deployment/sidecar-fallback.md](docs/deployment/sidecar-fallback.md) | Sidecar 降级方案 |
+
+Screenshot assets: [docs/images/README.md](docs/images/README.md)
+
+---
+
+## Stack / 技术栈
+
+```
+Base:       Stirling PDF (git submodule → stirling-upstream/)
+            https://github.com/Stirling-Tools/Stirling-PDF
+Extension:  extensions/french-reader-frontend/  (React Tool)
+            extensions/french-reader-engine/    (FastAPI sidecar :5002)
+Integration: minimal patches + FRENCH_READER_ENABLED flag
+```
+
+Architecture: [docs/images/shared/architecture.md](docs/images/shared/architecture.md)
+
+License note: Stirling uses a mixed license; see [docs/plan/07-license-compliance.md](docs/plan/07-license-compliance.md).

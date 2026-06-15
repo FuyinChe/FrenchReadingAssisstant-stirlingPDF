@@ -1,5 +1,8 @@
 # Sidecar 降级部署方案
 
+> **基座（可选）：** [**Stirling PDF**](https://github.com/Stirling-Tools/Stirling-PDF) — 本方案可在未打补丁的上游 Stirling 旁运行 French Reader 引擎。  
+> **本仓库：** [FrenchReadingAssisstant-stirlingPDF](https://github.com/FuyinChe/FrenchReadingAssisstant-stirlingPDF)
+
 当无法或不想修改 Stirling 源码/镜像时，French Reader 可以 **完全以 sidecar 形式独立运行**，Stirling 仅作为 PDF 宿主（甚至可以是未打补丁的上游 Stirling）。
 
 ## 架构

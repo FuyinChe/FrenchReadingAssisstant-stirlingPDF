@@ -1,4 +1,4 @@
-# FrenchPdfReader — full stack (M6)
+# French Reading Assistant for Stirling PDF — full stack (M6)
 # Stirling (with French Reader Tool UI) + sidecar engine + gateway on :8080
 #
 #   cp .env.docker.example .env
@@ -23,8 +23,8 @@ services:
       DISABLE_ADDITIONAL_FEATURES: "true"
       SECURITY_ENABLELOGIN: "false"
       SYSTEM_DEFAULTLOCALE: en-US
-      UI_APPNAME: FrenchPdfReader
-      UI_HOMEDESCRIPTION: Stirling PDF with French Reading Assistant
+      UI_APPNAME: French Reading Assistant
+      UI_HOMEDESCRIPTION: Powered by Stirling PDF — French OCR, TTS, and AI reading help
       SYSTEM_MAXFILESIZE: "100"
     networks:
       - french-reader-net

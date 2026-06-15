@@ -1,8 +1,11 @@
 # 01 — 项目概述
 
+> **基座应用：** [**Stirling PDF**](https://github.com/Stirling-Tools/Stirling-PDF)  
+> **本仓库：** [FrenchReadingAssisstant-stirlingPDF](https://github.com/FuyinChe/FrenchReadingAssisstant-stirlingPDF)（French Reading Assistant 插件）
+
 ## 项目名称
 
-**FrenchPdfReader** — 面向法语 PDF（尤其是漫画/BD）的智能阅读器
+**French Reading Assistant for Stirling PDF**（仓库名 `FrenchReadingAssisstant-stirlingPDF`）— 面向法语 PDF（尤其是漫画/BD）的阅读增强插件，挂载于 Stirling PDF，而非独立 PDF 应用。
 
 ## 问题陈述
 
