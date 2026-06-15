@@ -42,6 +42,14 @@ French-Reading-Assistant-0.5.0-macos-arm64/
 
 首次调试可勾选 **`skip_desktop: true`**（约 15–25 分钟/架构）。
 
+常见失败：
+
+| 现象 | 处理 |
+|------|------|
+| `failed to bundle project: No such file or directory` | 勿用完整 `desktop:build`（会尝试 dmg/deb/msi 等）；便携脚本已改为仅 `--bundles app` |
+| `TAURI_SIGNING_PRIVATE_KEY` | 便携包设置 `createUpdaterArtifacts: false`，无需 Stirling 更新签名私钥 |
+| Intel (x64) 找不到 `.app` | x64 在 M 系列 Runner 上交叉编译，产物在 `target/x86_64-apple-darwin/release/bundle/macos/` |
+
 ---
 
 ## 本地打包

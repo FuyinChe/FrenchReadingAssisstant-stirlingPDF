@@ -67,17 +67,22 @@ log "Staging Tesseract..."
 mkdir -p "${STAGING_DIR}/app"
 
 if [[ "${SKIP_DESKTOP}" != "true" ]]; then
+  RUST_TARGET=""
   if [[ "${ARCH_LABEL}" == "x64" ]]; then
-    rustup target add x86_64-apple-darwin >/dev/null 2>&1 || true
-    export CARGO_BUILD_TARGET=x86_64-apple-darwin
+    RUST_TARGET="x86_64-apple-darwin"
   fi
-  log "Building Stirling Tauri desktop (task desktop:build:dev:mac) — .app only, no updater signing..."
-  (cd "${ROOT}/stirling-upstream" && task desktop:build:dev:mac)
 
-  BUNDLE_MACOS="${ROOT}/stirling-upstream/frontend/editor/src-tauri/target/release/bundle/macos"
+  "${ROOT}/scripts/build-stirling-desktop-portable.sh" ${RUST_TARGET:+"${RUST_TARGET}"}
+
+  TAURI_TARGET_ROOT="${ROOT}/stirling-upstream/frontend/editor/src-tauri/target"
+  if [[ "${ARCH_LABEL}" == "x64" ]]; then
+    BUNDLE_MACOS="${TAURI_TARGET_ROOT}/x86_64-apple-darwin/release/bundle/macos"
+  else
+    BUNDLE_MACOS="${TAURI_TARGET_ROOT}/release/bundle/macos"
+  fi
   APP_SRC="$(find "${BUNDLE_MACOS}" -maxdepth 1 -name '*.app' 2>/dev/null | head -1)"
   if [[ -z "${APP_SRC}" ]]; then
-    APP_SRC="$(find "${ROOT}/stirling-upstream/frontend/editor/src-tauri/target" -name '*.app' 2>/dev/null | head -1)"
+    APP_SRC="$(find "${TAURI_TARGET_ROOT}" -path '*/bundle/macos/*.app' 2>/dev/null | head -1)"
   fi
   if [[ -n "${APP_SRC}" ]]; then
     cp -R "${APP_SRC}" "${STAGING_DIR}/app/"
@@ -106,6 +111,7 @@ Path('${STAGING_DIR}/VERSION.txt').write_text(
     'Stirling PDF: https://github.com/Stirling-Tools/Stirling-PDF\n',
     encoding='utf-8',
 )
+"
 
 if [[ "${SKIP_ZIP}" != "true" ]]; then
   ZIP_PATH="${OUTPUT_ROOT}/${STAGING_NAME}.zip"
