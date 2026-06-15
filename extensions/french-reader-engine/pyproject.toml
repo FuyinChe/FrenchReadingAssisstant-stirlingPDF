@@ -1,0 +1,57 @@
+[project]
+name = "french-reader-engine"
+version = "0.5.0"
+description = "French PDF Reader OCR/TTS extension for Stirling PDF"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "uvicorn[standard]>=0.27.0",
+    "python-multipart>=0.0.9",
+    "pillow>=10.0.0",
+    "numpy>=1.26.0",
+    "pytesseract>=0.3.10",
+    "edge-tts>=6.1.0",
+    "httpx>=0.27.0",
+    "reportlab>=4.0.0",
+]
+
+[project.optional-dependencies]
+ocr-paddle = [
+    "paddleocr>=2.9.0",
+    "paddlepaddle>=2.6.0",
+]
+ocr = ["pytesseract>=0.3.10"]
+bubble = [
+    "opencv-python-headless>=4.8.0",
+]
+bubble-yolo = [
+    "opencv-python-headless>=4.8.0",
+    "ultralytics>=8.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.27.0",
+    "pytest>=8.0.0",
+    "ruff>=0.4.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/french_reader"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/french_reader/_plugin_version.json" = "french_reader/_plugin_version.json"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]

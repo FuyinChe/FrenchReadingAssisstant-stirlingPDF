@@ -1,0 +1,58 @@
+# 01 — 项目概述
+
+> **基座应用：** [**Stirling PDF**](https://github.com/Stirling-Tools/Stirling-PDF)  
+> **本仓库：** [FrenchReadingAssisstant-stirlingPDF](https://github.com/FuyinChe/FrenchReadingAssisstant-stirlingPDF)（French Reading Assistant 插件）
+
+## 项目名称
+
+**French Reading Assistant for Stirling PDF**（仓库名 `FrenchReadingAssisstant-stirlingPDF`）— 面向法语 PDF（尤其是漫画/BD）的阅读增强插件，挂载于 Stirling PDF，而非独立 PDF 应用。
+
+## 问题陈述
+
+阅读法语漫画 PDF 时，用户常需要：
+
+- 从图片型页面中识别法语对白/旁白
+- 快速听取发音（TTS）
+- 在选区上下文获得 AI 辅助（释义、语法提示、生词等）
+
+现有通用 PDF 阅读器缺少「漫画气泡 + 法语 OCR + 即时 TTS + AI 侧栏」的一体化体验。
+
+## 核心功能（MVP → 完整版）
+
+| 优先级 | 功能 | 说明 |
+|--------|------|------|
+| P0 | PDF 阅读 | 分页、缩放、翻页；支持扫描型/图片型 PDF |
+| P0 | 区域框选 | 用户在页面上拖拽矩形，指定 OCR 范围 |
+| P0 | 法语 OCR | 从选区提取法语文本，显示置信度 |
+| P0 | 右侧 AI 面板 | 选区确认后弹出：原文、可复制、可编辑 |
+| P0 | 法语 TTS | 对提取文本一键朗读，可调语速 |
+| P1 | 自动气泡检测 | YOLO 等模型预检测 speech bubble，减少手动画框 |
+| P1 | AI 增强 | 单词释义、句子翻译、语法简析（可选 LLM） |
+| P2 | 阅读进度 / 书签 | 页码、选区历史 |
+| P2 | 离线模式 | 本地 OCR + 本地 TTS，无网络可用 |
+
+## 目标用户
+
+- 法语学习者，阅读 BD、bande dessinée、扫描版教材
+- 需要「看漫画 + 听发音 + AI 辅助」的沉浸式场景
+
+## 非目标（当前版本不做）
+
+- 全文自动翻译并替换 PDF 内容（可参考 comic-translate 类项目，但不在 MVP）
+- 多用户云端同步、付费订阅体系
+- 移动端原生 App（先 Web / Desktop）
+
+## 成功指标
+
+| 指标 | MVP 目标 |
+|------|----------|
+| 手动画框 OCR 准确率（清晰扫描页） | 法语 CER < 15%（抽样 20 页） |
+| 选区 → 面板展示延迟 | < 3s（CPU），< 1s（GPU） |
+| TTS 首字延迟 | < 2s |
+| 单页 PDF 打开时间 | < 2s（100 页以内文档） |
+
+## 相关文档
+
+- [架构设计](02-architecture.md)
+- [技术选型](03-tech-stack.md)
+- [任务 Backlog](../development/backlog.md)
