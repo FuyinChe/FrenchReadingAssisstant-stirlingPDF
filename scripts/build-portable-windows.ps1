@@ -84,10 +84,12 @@ Write-Log "Staging Tesseract OCR..."
 & (Join-Path $Root "scripts/fetch-tesseract-windows.ps1") -OutputDir (Join-Path $StagingDir "tesseract")
 
 if (-not $SkipDesktop) {
-    Write-Log "Building Stirling Tauri desktop (task desktop:build) — this can take 30+ minutes..."
+    Write-Log "Building Stirling Tauri desktop (task desktop:build:dev) — exe only, no MSI/updater signing..."
     Push-Location (Join-Path $Root "stirling-upstream")
-    & task desktop:build
-    if ($LASTEXITCODE -ne 0) { throw "task desktop:build failed" }
+    # Full desktop:build bundles MSI and signs updater artifacts (needs TAURI_SIGNING_PRIVATE_KEY).
+    # Portable zip only needs the release exe; upstream desktop:build:dev uses --no-bundle.
+    & task desktop:build:dev
+    if ($LASTEXITCODE -ne 0) { throw "task desktop:build:dev failed" }
     Pop-Location
 
     $BundleRoot = Join-Path $Root "stirling-upstream/frontend/editor/src-tauri/target/release/bundle"

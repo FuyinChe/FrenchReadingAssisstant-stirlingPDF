@@ -131,7 +131,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\bundle-sidecar-windows.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\fetch-tesseract-windows.ps1
 ```
 
-首次完整构建 **约 30–90 分钟**（含 `task desktop:build`）。
+首次完整构建 **约 20–60 分钟**（含 `task desktop:build:dev`，仅编译 exe，不打包 MSI）。
 
 ---
 
@@ -166,7 +166,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\fetch-tesseract-windows.ps1
 |------|------|
 | `python3: command not found` | 已修复：`install-extensions.sh` 使用 `python` 回退 |
 | `Tesseract not found` | workflow 会搜索 Chocolatey 与 Program Files 路径 |
-| `task desktop:build` 失败 | 确认已安装 **uv**（`astral-sh/setup-uv`）、JDK 25、Rust、`task install` 成功 |
+| `task desktop:build` 失败 | 便携包使用 `desktop:build:dev`（仅 exe，无需 `TAURI_SIGNING_PRIVATE_KEY`）；若仍失败，确认 **uv**、JDK 25、Rust、`task install` |
+| `TAURI_SIGNING_PRIVATE_KEY` | 仅完整 `desktop:build`（MSI + 自动更新签名）需要；便携 zip 已改用 `desktop:build:dev` |
 | Node.js 20 弃用警告 | 可忽略；workflow 已设置 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` |
 
 ---
@@ -193,6 +194,7 @@ Invoke-RestMethod http://127.0.0.1:5002/french-reader/version
 |------|------|
 | `git submodule` 失败 | 检查网络与 GitHub 访问 |
 | `task desktop:build` 失败 | 确认 JDK 25、Rust、`task install` 在 stirling-upstream 可运行 |
+| `TAURI_SIGNING_PRIVATE_KEY` | 便携包使用 `desktop:build:dev`，无需 Stirling 更新签名私钥 |
 | Tesseract 未找到 | 安装 UB-Mannheim Tesseract，确认 `fra` 语言包 |
 | PyInstaller 失败 | 删除 `dist/build-venv-windows` 后重跑 `bundle-sidecar-windows.ps1` |
 | `app\` 为空 | 手动从 `stirling-upstream/frontend/editor/src-tauri/target/release/*.exe` 复制到 zip 的 `app\` |
