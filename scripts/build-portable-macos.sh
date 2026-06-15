@@ -71,8 +71,8 @@ if [[ "${SKIP_DESKTOP}" != "true" ]]; then
     rustup target add x86_64-apple-darwin >/dev/null 2>&1 || true
     export CARGO_BUILD_TARGET=x86_64-apple-darwin
   fi
-  log "Building Stirling Tauri desktop (task desktop:build)..."
-  (cd "${ROOT}/stirling-upstream" && task desktop:build)
+  log "Building Stirling Tauri desktop (task desktop:build:dev:mac) — .app only, no updater signing..."
+  (cd "${ROOT}/stirling-upstream" && task desktop:build:dev:mac)
 
   BUNDLE_MACOS="${ROOT}/stirling-upstream/frontend/editor/src-tauri/target/release/bundle/macos"
   APP_SRC="$(find "${BUNDLE_MACOS}" -maxdepth 1 -name '*.app' 2>/dev/null | head -1)"
