@@ -43,10 +43,13 @@ function Copy-TesseractTree([string]$Source) {
 }
 
 $DefaultInstall = "${env:ProgramFiles}\Tesseract-OCR"
-if (Test-Path (Join-Path $DefaultInstall "tesseract.exe")) {
-    Write-Log "Copying from $DefaultInstall"
-    Copy-TesseractTree $DefaultInstall
-    exit 0
+$ChocolateyInstall = Join-Path $env:ProgramData "chocolatey\lib\tesseract\tools"
+foreach ($candidate in @($DefaultInstall, $ChocolateyInstall)) {
+    if (Test-Path (Join-Path $candidate "tesseract.exe")) {
+        Write-Log "Copying from $candidate"
+        Copy-TesseractTree $candidate
+        exit 0
+    }
 }
 
 $CacheInstaller = Join-Path $Root "dist/cache/tesseract-ocr-w64-setup.exe"

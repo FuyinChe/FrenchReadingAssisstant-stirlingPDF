@@ -158,6 +158,17 @@ powershell -ExecutionPolicy Bypass -File .\scripts\fetch-tesseract-windows.ps1
 
 公开仓库使用标准 `windows-latest` Runner 时，Actions 分钟数通常 **免费**（见 [GitHub Actions 计费](https://docs.github.com/en/billing/concepts/product-billing/github-actions)）。
 
+**首次调试建议：** 勾选 `skip_desktop=true`，先验证 engine + zip 流程（约 10–20 分钟），通过后再跑完整桌面包。
+
+常见失败：
+
+| 现象 | 处理 |
+|------|------|
+| `python3: command not found` | 已修复：`install-extensions.sh` 使用 `python` 回退 |
+| `Tesseract not found` | workflow 会搜索 Chocolatey 与 Program Files 路径 |
+| `task desktop:build` 失败 | 查看日志；确认 JDK 25、Rust、`task install` 成功 |
+| Node.js 20 弃用警告 | 可忽略；workflow 已设置 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` |
+
 ---
 
 ## 六、在测试机上使用
