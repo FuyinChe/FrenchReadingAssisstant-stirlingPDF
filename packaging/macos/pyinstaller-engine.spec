@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller spec for french-reader-engine (Windows x64 portable)."""
+"""PyInstaller spec for french-reader-engine (macOS)."""
 
 import pathlib
 
@@ -7,7 +7,6 @@ from PyInstaller.utils.hooks import collect_submodules
 
 
 def _repo_root() -> pathlib.Path:
-    # SPEC = full path to this .spec file; SPECPATH = directory containing it.
     spec_file = pathlib.Path(globals().get("SPEC", SPECPATH)).resolve()
     start = spec_file.parent if spec_file.is_file() else spec_file
     for candidate in (start, *start.parents):
@@ -41,7 +40,7 @@ hiddenimports += [
 ]
 
 a = Analysis(
-    [str(root / "packaging" / "windows" / "engine-main.py")],
+    [str(root / "packaging" / "macos" / "engine-main.py")],
     pathex=[str(engine_src)],
     binaries=[],
     datas=[(str(version_json), "french_reader")],
@@ -65,7 +64,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=True,

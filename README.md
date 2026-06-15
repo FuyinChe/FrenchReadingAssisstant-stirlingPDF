@@ -83,7 +83,8 @@ Requires JDK 25, Node 20+, Rust (see [Stirling DeveloperGuide](https://github.co
 | Dev setup (detailed) | [docs/dev-setup.md](docs/dev-setup.md) | 同上（中英混排，偏开发者） |
 | Architecture / plan | [docs/plan/](docs/plan/) | 计划文档（中文为主） |
 | Sidecar fallback | [docs/deployment/sidecar-fallback.md](docs/deployment/sidecar-fallback.md) | Sidecar 降级（技术用户） |
-| **Windows portable ZIP** | [docs/deployment/windows-portable-packaging.md](docs/deployment/windows-portable-packaging.md) | **Windows 解压即用打包** |
+| **Windows portable ZIP** | [docs/deployment/windows-portable-packaging.md](docs/deployment/windows-portable-packaging.md) | Windows 解压即用 |
+| **macOS portable ZIP** | [docs/deployment/macos-portable-packaging.md](docs/deployment/macos-portable-packaging.md) | macOS ARM + Intel 解压即用 |
 | **End-user distribution** | [docs/plan/10-distribution-strategy.md](docs/plan/10-distribution-strategy.md) | **普通用户发行策略（桌面包优先）** |
 
 Screenshot assets: [docs/images/README.md](docs/images/README.md)

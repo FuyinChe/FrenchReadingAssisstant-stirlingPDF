@@ -27,7 +27,6 @@ function Ensure-Command([string]$Name) {
 }
 
 Ensure-Command python
-Ensure-Command pip
 
 Write-Log "Syncing plugin version..."
 & python (Join-Path $Root "scripts/sync-plugin-version.py") --platform windows-x64
@@ -42,13 +41,11 @@ if (-not (Test-Path $VenvDir)) {
 }
 
 $Py = Join-Path $VenvDir "Scripts/python.exe"
-$Pip = Join-Path $VenvDir "Scripts/pip.exe"
-$PyInstaller = Join-Path $VenvDir "Scripts/pyinstaller.exe"
 
 Write-Log "Installing build dependencies..."
-& $Pip install --upgrade pip wheel | Out-Null
-& $Pip install pyinstaller | Out-Null
-& $Pip install -e "$EngineDir[bubble]" | Out-Null
+& $Py -m pip install --upgrade pip wheel
+& $Py -m pip install pyinstaller
+& $Py -m pip install -e "${EngineDir}[bubble]"
 
 $BuildWork = Join-Path $Root "dist/pyinstaller-work"
 $BuildDist = Join-Path $Root "dist/pyinstaller-dist"

@@ -1,0 +1,195 @@
+# Manual macOS portable ZIP build (Apple Silicon + Intel) + optional GitHub Release.
+# Trigger: Actions → "Release macOS Portable" → Run workflow
+name: Release macOS Portable
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Git tag (e.g. v0.5.0). Required when creating a GitHub Release."
+        required: false
+        type: string
+      create_github_release:
+        description: "Create GitHub Release and attach zip files"
+        required: true
+        type: boolean
+        default: true
+      draft_release:
+        description: "Create release as draft (review before publishing)"
+        required: true
+        type: boolean
+        default: true
+      skip_desktop:
+        description: "Skip Stirling Tauri build (engine-only smoke test)"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-macos-portable
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  FRENCH_READER_ENABLED: "true"
+  VITE_FRENCH_READER_ENABLED: "true"
+  VITE_FRENCH_READER_API_URL: http://127.0.0.1:5002/french-reader
+  FRENCH_READER_SKIP_ENGINE_INSTALL: "true"
+
+jobs:
+  build-macos-portable:
+    name: Build ${{ matrix.platform }}
+    runs-on: macos-14
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            platform: macos-arm64
+            python_arch: arm64
+            rust_target: aarch64-apple-darwin
+          - arch: x64
+            platform: macos-x64
+            python_arch: x64
+            rust_target: x86_64-apple-darwin
+
+    steps:
+      - name: Validate release inputs
+        if: matrix.arch == 'arm64'
+        run: |
+          if [ "${{ inputs.create_github_release }}" = "true" ] && [ -z "${{ inputs.release_tag }}" ]; then
+            echo "release_tag is required when create_github_release is true (e.g. v0.5.0)"
+            exit 1
+          fi
+
+      - name: Checkout (with Stirling submodule)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rosetta (Intel / x64 build on Apple Silicon runner)
+        if: matrix.arch == 'x64'
+        run: softwareupdate --install-rosetta --agree-to-license
+
+      - name: Setup Python (${{ matrix.python_arch }})
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: ${{ matrix.python_arch }}
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13.8"
+          enable-cache: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Setup Rust (${{ matrix.rust_target }})
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_target }}
+
+      - name: Install Homebrew tools
+        run: |
+          brew install go-task tesseract tesseract-lang
+          tesseract --version
+          tesseract --list-langs | head -20
+
+      - name: Verify build toolchain
+        run: |
+          python --version
+          node --version
+          java -version
+          cargo --version
+          task --version
+          uv --version
+          uname -m
+
+      - name: Sync plugin version metadata
+        run: python scripts/sync-plugin-version.py --platform ${{ matrix.platform }}
+
+      - name: Install extensions into Stirling
+        run: |
+          chmod +x scripts/*.sh packaging/macos/*.command
+          ./scripts/install-extensions.sh
+
+      - name: Install Stirling build dependencies
+        if: ${{ !inputs.skip_desktop }}
+        working-directory: stirling-upstream
+        run: task install
+
+      - name: Build macOS portable zip (${{ matrix.platform }})
+        env:
+          CARGO_BUILD_TARGET: ${{ matrix.rust_target }}
+        run: |
+          ARGS=(--arch "${{ matrix.arch }}")
+          if [ "${{ inputs.skip_desktop }}" = "true" ]; then
+            ARGS+=(--skip-desktop)
+          fi
+          ./scripts/build-portable-macos.sh "${ARGS[@]}"
+
+      - name: List build output
+        run: ls -la dist/portable-macos/
+
+      - name: Upload portable zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-portable-${{ matrix.platform }}-${{ inputs.release_tag || 'snapshot' }}
+          path: dist/portable-macos/*-${{ matrix.platform }}.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  create-github-release:
+    name: Publish GitHub Release
+    needs: build-macos-portable
+    if: inputs.create_github_release && inputs.release_tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download portable zip artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: macos-portable-*
+          path: dist/release-assets
+          merge-multiple: true
+
+      - name: List release assets
+        run: find dist/release-assets -type f
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.release_tag }}
+          name: French Reading Assistant ${{ inputs.release_tag }} (macOS portable)
+          draft: ${{ inputs.draft_release }}
+          prerelease: true
+          generate_release_notes: true
+          files: dist/release-assets/**/*.zip
+          body: |
+            ## macOS portable (解压即用)
+
+            | Mac type | Download |
+            |----------|----------|
+            | Apple Silicon (M1/M2/M3) | `*-macos-arm64.zip` |
+            | Intel | `*-macos-x64.zip` |
+
+            1. Unzip the archive for your Mac
+            2. Double-click **`Start French Reading Assistant.command`**
+            3. If blocked: System Settings → Privacy & Security → Open Anyway
+
+            See [macos-portable-packaging.md](https://github.com/${{ github.repository }}/blob/main/docs/deployment/macos-portable-packaging.md).
+
+            **Powered by [Stirling PDF](https://github.com/Stirling-Tools/Stirling-PDF)**
