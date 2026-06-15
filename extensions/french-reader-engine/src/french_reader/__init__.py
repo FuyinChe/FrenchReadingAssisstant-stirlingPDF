@@ -1,3 +1,5 @@
 """French Reader extension engine for Stirling PDF."""
 
-__version__ = "0.1.0"
+from french_reader.plugin_version import get_plugin_version_string
+
+__version__ = get_plugin_version_string()

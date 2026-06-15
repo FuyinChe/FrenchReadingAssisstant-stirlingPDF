@@ -45,6 +45,9 @@ Open Stirling at http://localhost:5173 → **Recommended tools** → **French Re
 
 ## Docker / Docker 部署
 
+> **普通用户：** 不建议使用 Docker。目标体验是 [GitHub Releases 桌面包 / 免安装 zip](docs/plan/10-distribution-strategy.md)。  
+> **End users:** Prefer the desktop installer/portable zip (see distribution strategy). Docker is for self-hosting / IT.
+
 Images are **built locally** from this repo (nothing is pushed to Docker Hub by default).
 
 ```bash
@@ -59,6 +62,8 @@ See [docs/en/getting-started.md#docker](docs/en/getting-started.md#docker) · [d
 ---
 
 ## Desktop (Tauri) / 桌面版
+
+> **规划中（M7）：** 面向普通用户的 `.dmg` / `.exe` 一键安装；当前脚本供开发者构建。详见 [发行策略](docs/plan/10-distribution-strategy.md)。
 
 ```bash
 ./scripts/build-desktop.sh
@@ -77,7 +82,9 @@ Requires JDK 25, Node 20+, Rust (see [Stirling DeveloperGuide](https://github.co
 | User guide (+ screenshots) | [docs/en/user-guide.md](docs/en/user-guide.md) | [docs/zh/user-guide.md](docs/zh/user-guide.md) |
 | Dev setup (detailed) | [docs/dev-setup.md](docs/dev-setup.md) | 同上（中英混排，偏开发者） |
 | Architecture / plan | [docs/plan/](docs/plan/) | 计划文档（中文为主） |
-| Sidecar fallback | [docs/deployment/sidecar-fallback.md](docs/deployment/sidecar-fallback.md) | Sidecar 降级方案 |
+| Sidecar fallback | [docs/deployment/sidecar-fallback.md](docs/deployment/sidecar-fallback.md) | Sidecar 降级（技术用户） |
+| **Windows portable ZIP** | [docs/deployment/windows-portable-packaging.md](docs/deployment/windows-portable-packaging.md) | **Windows 解压即用打包** |
+| **End-user distribution** | [docs/plan/10-distribution-strategy.md](docs/plan/10-distribution-strategy.md) | **普通用户发行策略（桌面包优先）** |
 
 Screenshot assets: [docs/images/README.md](docs/images/README.md)
 

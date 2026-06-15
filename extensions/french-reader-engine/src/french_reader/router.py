@@ -14,6 +14,7 @@ from french_reader.ai_service import (
     validate_ai_text,
 )
 from french_reader.config import settings
+from french_reader.plugin_version import get_plugin_version_info
 from french_reader.ocr_availability import any_ocr_engine_ready, get_ocr_engine_status
 from french_reader.ocr_service import recognize_french
 from french_reader.export_service import build_history_pdf
@@ -50,13 +51,20 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/french-reader", tags=["French Reader"])
 
 
+@router.get("/version")
+async def plugin_version() -> dict:
+    return get_plugin_version_info()
+
+
 @router.get("/status")
-async def status() -> dict[str, str | bool]:
+async def status() -> dict[str, str | bool | dict]:
+    plugin = get_plugin_version_info()
     bubble_status = get_bubble_detector_status()
     return {
         "module": "french-reader",
-        "version": "0.4.0",
-        "phase": "M5-regions",
+        "version": plugin.get("version", "unknown"),
+        "plugin": plugin,
+        "phase": "M7-portable",
         "ocr_ready": any_ocr_engine_ready(),
         "bubble_ready": bubble_status.ready,
         "paragraph_ready": get_paragraph_detector_status().ready,

@@ -12,6 +12,12 @@ ENABLED="${FRENCH_READER_ENABLED:-true}"
 log() { printf '[install-extensions] %s\n' "$*"; }
 die() { printf '[install-extensions] ERROR: %s\n' "$*" >&2; exit 1; }
 
+if command -v python3 >/dev/null 2>&1; then
+  python3 "${ROOT}/scripts/sync-plugin-version.py" || die "sync-plugin-version failed"
+else
+  log "python3 not found — skip version sync (run scripts/sync-plugin-version.py manually)"
+fi
+
 [[ -d "${STIRLING}/frontend" ]] || die "stirling-upstream not found. Run: git submodule update --init --recursive"
 
 log "Installing French Reader extensions (enabled=${ENABLED})"

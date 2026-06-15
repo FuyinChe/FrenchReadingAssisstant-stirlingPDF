@@ -31,6 +31,11 @@ import {
   providerRequiresEndpoint,
   type UserLlmSettings,
 } from "@app/services/frenchReaderLlmSettings";
+import {
+  FRENCH_READER_BUILD_ID,
+  FRENCH_READER_BUILD_PLATFORM,
+  FRENCH_READER_PLUGIN_VERSION,
+} from "@app/services/frenchReaderVersion";
 
 const RATE_OPTIONS: { value: TtsRate; labelKey: string; fallback: string }[] = [
   { value: "-15%", labelKey: "frenchReader.tts.rateSlow", fallback: "Slow" },
@@ -367,6 +372,16 @@ export function FrenchReaderSettingsButton() {
               </Text>
             )}
           </Stack>
+
+          <Text size="xs" c="dimmed" ta="center">
+            {t("frenchReader.version.label", "Plugin v{{version}}", {
+              version: FRENCH_READER_PLUGIN_VERSION,
+            })}
+            {FRENCH_READER_BUILD_PLATFORM
+              ? ` · ${FRENCH_READER_BUILD_PLATFORM}`
+              : ""}
+            {FRENCH_READER_BUILD_ID ? ` · ${FRENCH_READER_BUILD_ID}` : ""}
+          </Text>
 
           <Button onClick={close}>{t("frenchReader.tts.settingsDone", "Done")}</Button>
         </Stack>

@@ -9,7 +9,8 @@
 |---------|------|
 | [Getting started](en/getting-started.md) | [快速开始](zh/getting-started.md) |
 | [User guide](en/user-guide.md) | [用户手册](zh/user-guide.md) |
-| [Architecture diagram](images/shared/architecture.md) | [架构图](images/shared/architecture.md) |
+| [Windows portable ZIP](deployment/windows-portable-packaging.md) | [Windows 解压即用打包](deployment/windows-portable-packaging.md) |
+| [Distribution strategy (end users)](plan/10-distribution-strategy.md) | [打包发行策略](plan/10-distribution-strategy.md) |
 | [Screenshot assets](images/README.md) | [截图资源说明](images/README.md) |
 
 ---
@@ -30,7 +31,8 @@ docs/
 │   └── user-guide/{en,zh}/
 ├── dev-setup.md              # Developer setup (detailed, 中文为主)
 ├── deployment/
-│   └── sidecar-fallback.md
+│   ├── sidecar-fallback.md
+│   └── windows-portable-packaging.md   # Windows zip 打包（M7）
 ├── plan/                     # Architecture & milestones
 └── development/              # Backlog, progress, sync log
 ```
