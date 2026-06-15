@@ -4,7 +4,7 @@ import pytest
 from PIL import Image, ImageDraw, ImageFont
 
 from french_reader.paragraph_detector import detect_text_paragraphs
-from tests.regression_assets import regression_assets_dir
+from regression_assets import regression_assets_dir
 
 pytest.importorskip("cv2")
 

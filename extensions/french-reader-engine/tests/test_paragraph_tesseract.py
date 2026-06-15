@@ -46,7 +46,7 @@ def test_detect_paragraphs_prefers_tesseract_when_available(_lines, _available):
 
 @patch("french_reader.paragraph_tesseract.try_detect_paragraphs_tesseract", return_value=None)
 def test_detect_paragraphs_falls_back_to_opencv(_tesseract):
-    from tests.test_paragraph_detector import _picture_book_text_with_illustration_page
+    from test_paragraph_detector import _picture_book_text_with_illustration_page
 
     detections = detect_text_paragraphs(
         _picture_book_text_with_illustration_page(),
