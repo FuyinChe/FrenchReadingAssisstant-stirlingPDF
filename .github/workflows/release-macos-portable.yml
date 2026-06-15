@@ -132,10 +132,21 @@ jobs:
         working-directory: stirling-upstream
         run: task install
 
+      - name: Verify portable desktop build script
+        if: ${{ !inputs.skip_desktop }}
+        run: |
+          chmod +x scripts/build-stirling-desktop-portable.sh
+          if grep -qE 'task desktop:build[^:a-zA-Z-]' scripts/build-portable-macos.sh; then
+            echo "build-portable-macos.sh must not invoke task desktop:build (use build-stirling-desktop-portable.sh)"
+            exit 1
+          fi
+          test -x scripts/build-stirling-desktop-portable.sh
+
       - name: Build macOS portable zip (${{ matrix.platform }})
         env:
           CARGO_BUILD_TARGET: ${{ matrix.rust_target }}
         run: |
+          chmod +x scripts/build-stirling-desktop-portable.sh
           ARGS=(--arch "${{ matrix.arch }}")
           if [ "${{ inputs.skip_desktop }}" = "true" ]; then
             ARGS+=(--skip-desktop)
