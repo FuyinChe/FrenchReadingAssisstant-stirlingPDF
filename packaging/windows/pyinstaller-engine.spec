@@ -5,7 +5,18 @@ import pathlib
 
 from PyInstaller.utils.hooks import collect_submodules
 
-root = pathlib.Path(SPECPATH).resolve().parents[2]
+
+def _repo_root() -> pathlib.Path:
+    # SPEC = full path to this .spec file; SPECPATH = directory containing it.
+    spec_file = pathlib.Path(globals().get("SPEC", SPECPATH)).resolve()
+    start = spec_file.parent if spec_file.is_file() else spec_file
+    for candidate in (start, *start.parents):
+        if (candidate / "extensions" / "french-reader-engine" / "pyproject.toml").is_file():
+            return candidate
+    raise RuntimeError(f"Could not locate repo root from spec at {spec_file}")
+
+
+root = _repo_root()
 engine_src = root / "extensions" / "french-reader-engine" / "src"
 version_json = engine_src / "french_reader" / "_plugin_version.json"
 
