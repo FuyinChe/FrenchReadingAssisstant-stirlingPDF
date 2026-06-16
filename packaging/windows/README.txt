@@ -5,7 +5,7 @@ START HERE / 从这里启动
   Double-click:  Start French Reading Assistant.bat
 
 WHAT THIS FOLDER CONTAINS / 目录说明
-  app\       Stirling PDF desktop (with French Reader tool)
+  app\       Stirling PDF desktop (exe + runtime\jre + libs\*.jar)
   engine\    French Reader OCR / TTS / AI service (local only)
   tesseract\ OCR language data (French included when bundled)
 

@@ -93,11 +93,25 @@ if (-not $SkipDesktop) {
     Pop-Location
 
     $BundleRoot = Join-Path $Root "stirling-upstream/frontend/editor/src-tauri/target/release/bundle"
+    $ReleaseDir = Join-Path $Root "stirling-upstream/frontend/editor/src-tauri/target/release"
+    $TauriSrc = Join-Path $Root "stirling-upstream/frontend/editor/src-tauri"
     $AppDir = Join-Path $StagingDir "app"
     New-Item -ItemType Directory -Force -Path $AppDir | Out-Null
 
+    function Copy-DesktopTree([string]$Name, [string[]]$Candidates) {
+        foreach ($src in $Candidates) {
+            if (Test-Path $src) {
+                $dest = Join-Path $AppDir $Name
+                if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
+                Copy-Item -Recurse -Force $src $dest
+                Write-Log "Copied desktop ${Name} from $src"
+                return $true
+            }
+        }
+        return $false
+    }
+
     $Copied = $false
-    $ReleaseDir = Join-Path $Root "stirling-upstream/frontend/editor/src-tauri/target/release"
     $ReleaseExe = Get-ChildItem -Path $ReleaseDir -Filter "*.exe" -ErrorAction SilentlyContinue |
         Where-Object { $_.Name -notmatch 'engine|installer|setup|bundle' } |
         Select-Object -First 1
@@ -117,8 +131,26 @@ if (-not $SkipDesktop) {
         }
     }
     if (-not $Copied) {
-        Write-Log "WARN: Could not auto-detect desktop exe. Copy manually into $AppDir"
+        throw "Could not find Stirling desktop exe under $ReleaseDir"
     }
+
+    # desktop:build:dev (--no-bundle) only emits the exe; bundled JRE + JAR must sit beside it.
+    $runtimeOk = Copy-DesktopTree "runtime" @(
+        (Join-Path $ReleaseDir "runtime"),
+        (Join-Path $TauriSrc "runtime")
+    )
+    $libsOk = Copy-DesktopTree "libs" @(
+        (Join-Path $ReleaseDir "libs"),
+        (Join-Path $TauriSrc "libs")
+    )
+    if (-not $runtimeOk) { throw "Missing runtime/jre — Stirling Java backend cannot start" }
+    if (-not $libsOk) { throw "Missing libs/stirling-pdf jar — Stirling Java backend cannot start" }
+
+    $JavaExe = Join-Path $AppDir "runtime/jre/bin/java.exe"
+    $Jar = Get-ChildItem -Path (Join-Path $AppDir "libs") -Filter "stirling-pdf-*.jar" -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not (Test-Path $JavaExe)) { throw "Bundled JRE missing after staging: $JavaExe" }
+    if (-not $Jar) { throw "Stirling PDF jar missing under app\libs after staging" }
+    Write-Log "Verified desktop payload: java.exe + $($Jar.Name)"
 } else {
     Write-Log "SkipDesktop set — place Stirling .exe in $StagingDir\app manually"
     New-Item -ItemType Directory -Force -Path (Join-Path $StagingDir "app") | Out-Null

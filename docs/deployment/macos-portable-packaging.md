@@ -32,13 +32,14 @@ French-Reading-Assistant-0.5.0-macos-arm64/
 
 ## GitHub Actions（推荐）
 
-**Actions** → **Release macOS Portable** → **Run workflow**
+**Actions** → **Release Portable** → **Run workflow**
 
+- 与 Windows 在同一 workflow 中并行构建；三个 zip 合并到**同一个 GitHub Release** Assets
 - 在 `macos-14` 上**并行**构建 **arm64** 与 **x64** 两个 zip
 - Intel 包在 Apple Silicon Runner 上通过 Rosetta + `setup-python` x64 交叉构建
 - 参数与 Windows 工作流相同：`release_tag`、`draft_release`、`skip_desktop`
 
-工作流：`.github/workflows/release-macos-portable.yml`
+工作流：`.github/workflows/release-portable.yml`
 
 首次调试可勾选 **`skip_desktop: true`**（约 15–25 分钟/架构）。
 
@@ -98,13 +99,21 @@ chmod +x "Start French Reading Assistant.command"
 4. **不要关闭**该终端窗口，否则 OCR 引擎会停  
 5. 在 Stirling 中打开 PDF → **French Reading Assistant**
 
+### 故障排除（使用）
+
+| 问题 | 处理 |
+|------|------|
+| OCR 失败 / Load failed | 旧包未设置 CORS；新包启动脚本会注入 `FRENCH_READER_CORS_ORIGINS`（含 `tauri.localhost`）。须用新 zip 重打 |
+| 钥匙串反复要密码 | 见 README；启动脚本已设置 `STIRLING_PDF_TEST_FORCE_*_KEYRING_FAIL` |
+| Stirling 闪退 | `xattr -cr .`；确认 zip 含完整 `.app`（非仅 exe） |
+
 > 长期方案是 Apple 开发者签名 + 公证（notarization）；当前版本为未签名便携包，需按上述步骤首次放行。
 
 ---
 
 ## English summary
 
-**Workflow:** Actions → *Release macOS Portable* — builds **macos-arm64** and **macos-x64** zips on `macos-14`, manual `workflow_dispatch` only.
+**Workflow:** Actions → *Release Portable* — builds **windows-x64**, **macos-arm64**, and **macos-x64** zips; one GitHub Release with all assets.
 
 **Local:** `./scripts/build-portable-macos.sh --arch arm64|x64`
 

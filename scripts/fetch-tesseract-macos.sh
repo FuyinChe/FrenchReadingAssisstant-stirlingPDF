@@ -26,6 +26,9 @@ copy_tess_tree() {
   if [[ ! -d "${OUTPUT_DIR}/share/tessdata" && -d "${prefix}/../share/tessdata" ]]; then
     cp -R "${prefix}/../share/tessdata" "${OUTPUT_DIR}/share/"
   fi
+  if [[ -d "${OUTPUT_DIR}/share/tessdata" ]]; then
+    chmod -R u+rw "${OUTPUT_DIR}/share/tessdata" 2>/dev/null || true
+  fi
   return 0
 }
 
