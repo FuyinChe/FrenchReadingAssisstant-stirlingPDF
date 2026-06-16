@@ -2,18 +2,17 @@
 export const FRENCH_READER_PLUGIN_INFO = {
   "name": "french-reading-assistant",
   "displayName": "French Reading Assistant",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "apiVersion": 1,
   "minStirlingVersion": "2.0.0",
   "channel": "portable",
   "build": {
-    "platform": "macos-arm64",
-    "id": "0.5.0-20260616-143255",
-    "builtAt": "2026-06-16T14:32:55+00:00"
+    "id": "0.5.1-20260616-153546",
+    "builtAt": "2026-06-16T15:35:46+00:00"
   }
 } as const;
 
-export const FRENCH_READER_PLUGIN_VERSION = "0.5.0" as const;
+export const FRENCH_READER_PLUGIN_VERSION = "0.5.1" as const;
 export const FRENCH_READER_PLUGIN_NAME = "french-reading-assistant" as const;
-export const FRENCH_READER_BUILD_ID = "0.5.0-20260616-143255" as const;
-export const FRENCH_READER_BUILD_PLATFORM = "macos-arm64" as const;
+export const FRENCH_READER_BUILD_ID = "0.5.1-20260616-153546" as const;
+export const FRENCH_READER_BUILD_PLATFORM = "" as const;

@@ -59,8 +59,14 @@ FIRST RUN / 首次使用
     3. 仍失败：打开「控制台」(Console.app) 搜索 stirling
 
   OCR 框选后显示失败 / Load failed？
-    • 旧包未允许 Stirling 桌面 WebView 的 CORS 来源
-    • 请使用新 zip（启动脚本会设置 FRENCH_READER_CORS_ORIGINS）
+    • 最常见：French Reader 引擎未在 :5002 运行（macOS 上 Killed: 9 → 先运行 sign-engine-bundle.sh）
+    • 确认启动 .command 后终端窗口仍打开，且显示 “French Reader engine is ready”
+    • 终端测试：curl -s http://127.0.0.1:5002/french-reader/status
+    • 旧包 CORS：须用新 zip（启动脚本含 FRENCH_READER_CORS_ORIGINS）
+
+  引擎 Killed: 9 / 秒退？
+    • ./sign-engine-bundle.sh engine/french-reader-engine
+    • 再 ./Start\ French\ Reading\ Assistant.command
 
 ARCHITECTURE / 架构
   Apple Silicon (arm64): French-Reading-Assistant-*-macos-arm64.zip

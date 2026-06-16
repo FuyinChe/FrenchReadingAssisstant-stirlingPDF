@@ -73,6 +73,10 @@ fi
 if [[ "${SMOKE_TEST}" == "true" ]]; then
   export PATH="${STAGING_DIR}/tesseract/bin:${PATH}"
   export TESSDATA_PREFIX="${STAGING_DIR}/tesseract/share/tessdata"
+  SIGN_SCRIPT="${STAGING_DIR}/sign-engine-bundle.sh"
+  if [[ -x "${SIGN_SCRIPT}" ]]; then
+    "${SIGN_SCRIPT}" "${ENGINE_DIR}"
+  fi
   export FRENCH_READER_CORS_ORIGINS="${FRENCH_READER_CORS_ORIGINS:-http://localhost:5173,https://tauri.localhost}"
   ENGINE_PID=""
   cleanup() {
@@ -83,7 +87,11 @@ if [[ "${SMOKE_TEST}" == "true" ]]; then
   }
   trap cleanup EXIT
 
-  "${ENGINE}" &
+  env -u DYLD_LIBRARY_PATH \
+    PATH="${STAGING_DIR}/tesseract/bin:${PATH}" \
+    TESSDATA_PREFIX="${STAGING_DIR}/tesseract/share/tessdata" \
+    FRENCH_READER_CORS_ORIGINS="${FRENCH_READER_CORS_ORIGINS:-http://localhost:5173,https://tauri.localhost}" \
+    "${ENGINE}" &
   ENGINE_PID=$!
 
   status_json=""
