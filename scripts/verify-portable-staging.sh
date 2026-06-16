@@ -50,7 +50,6 @@ for pattern in libtesseract libleptonica libtiff libjpeg libgif libopenjp2; do
 done
 
 export PATH="${STAGING_DIR}/tesseract/bin:${PATH}"
-export DYLD_LIBRARY_PATH="${TESS_LIB}${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}"
 export TESSDATA_PREFIX="${STAGING_DIR}/tesseract/share/tessdata"
 
 tess_version="$("${TESS_BIN}" --version 2>&1 | head -1)"
@@ -73,7 +72,6 @@ fi
 
 if [[ "${SMOKE_TEST}" == "true" ]]; then
   export PATH="${STAGING_DIR}/tesseract/bin:${PATH}"
-  export DYLD_LIBRARY_PATH="${TESS_LIB}${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}"
   export TESSDATA_PREFIX="${STAGING_DIR}/tesseract/share/tessdata"
   export FRENCH_READER_CORS_ORIGINS="${FRENCH_READER_CORS_ORIGINS:-http://localhost:5173,https://tauri.localhost}"
   ENGINE_PID=""
