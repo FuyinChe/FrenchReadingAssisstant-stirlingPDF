@@ -20,13 +20,17 @@ resolve_engine() {
 }
 
 sign_engine() {
-  local engine="$1"
-  if ! command -v codesign >/dev/null 2>&1; then
-    return 0
+  local script="${ROOT}/sign-engine-bundle.sh"
+  if [[ -x "${script}" ]]; then
+    "${script}" "${ROOT}/engine/french-reader-engine" || {
+      echo "[WARN] Engine codesign failed — OCR engine may be killed by macOS."
+      echo "  Run: \"${script}\" \"${ROOT}/engine/french-reader-engine\""
+    }
+    return
   fi
-  codesign -s - --force --deep "${engine}" 2>/dev/null || true
-  if [[ -d "${ROOT}/engine/french-reader-engine/_internal" ]]; then
-    codesign -s - --force --deep "${ROOT}/engine/french-reader-engine" 2>/dev/null || true
+  if command -v codesign >/dev/null 2>&1; then
+    chmod -R u+w "${ROOT}/engine/french-reader-engine" 2>/dev/null || true
+    codesign -s - --force --deep "${1}" || echo "[WARN] codesign failed for ${1}"
   fi
 }
 
@@ -45,8 +49,9 @@ if xattr -l "${ROOT}/engine/french-reader-engine" 2>/dev/null | grep -q 'com.app
 fi
 
 export PATH="${ROOT}/tesseract/bin:${PATH}"
-export DYLD_LIBRARY_PATH="${ROOT}/tesseract/lib${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}"
 export TESSDATA_PREFIX="${ROOT}/tesseract/share/tessdata"
+# Do not set DYLD_LIBRARY_PATH before the PyInstaller engine — macOS may SIGKILL it
+# when it loads bundled Python/OpenCV. Bundled tesseract uses @rpath to ../lib.
 export FRENCH_READER_ENABLED=true
 export VITE_FRENCH_READER_ENABLED=true
 export VITE_FRENCH_READER_API_URL="${VITE_FRENCH_READER_API_URL:-http://127.0.0.1:5002/french-reader}"
@@ -76,7 +81,14 @@ echo "Starting French Reading Assistant..."
 echo "(Engine startup can take 20–60s on first launch — please wait.)"
 
 : > "${ENGINE_LOG}"
-"${ENGINE}" >>"${ENGINE_LOG}" 2>&1 &
+env -u DYLD_LIBRARY_PATH \
+  PATH="${ROOT}/tesseract/bin:${PATH}" \
+  TESSDATA_PREFIX="${ROOT}/tesseract/share/tessdata" \
+  FRENCH_READER_ENABLED="${FRENCH_READER_ENABLED}" \
+  VITE_FRENCH_READER_ENABLED="${VITE_FRENCH_READER_ENABLED}" \
+  VITE_FRENCH_READER_API_URL="${VITE_FRENCH_READER_API_URL}" \
+  FRENCH_READER_CORS_ORIGINS="${FRENCH_READER_CORS_ORIGINS}" \
+  "${ENGINE}" >>"${ENGINE_LOG}" 2>&1 &
 ENGINE_PID=$!
 STIRLING_PID=""
 cleanup() {
@@ -99,7 +111,9 @@ for i in $(seq 1 90); do
       echo "--- end ---"
     else
       echo "No engine log output (process may have been killed by macOS before startup)."
-      echo "Try: codesign -s - --force --deep \"${ENGINE}\""
+      echo "Try signing the engine bundle:"
+      echo "  \"${ROOT}/sign-engine-bundle.sh\" \"${ROOT}/engine/french-reader-engine\""
+      echo "Or: codesign -s - --force --deep \"${ENGINE}\""
     fi
     echo
     echo "Full log: ${ENGINE_LOG}"

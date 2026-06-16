@@ -51,7 +51,8 @@ chmod +x "${OUTPUT_DIR}/french-reader-engine/french-reader-engine"
 
 if command -v codesign >/dev/null 2>&1; then
   log "Ad-hoc codesigning engine bundle..."
-  codesign -s - --force --deep "${OUTPUT_DIR}/french-reader-engine/french-reader-engine"
+  chmod +x "${ROOT}/packaging/macos/sign-engine-bundle.sh"
+  "${ROOT}/packaging/macos/sign-engine-bundle.sh" "${OUTPUT_DIR}/french-reader-engine"
 fi
 
 log "Engine bundle: ${OUTPUT_DIR}/french-reader-engine/french-reader-engine"
