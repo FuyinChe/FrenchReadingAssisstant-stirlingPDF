@@ -9,6 +9,11 @@ export FRENCH_READER_ENABLED=true
 export VITE_FRENCH_READER_ENABLED=true
 export VITE_FRENCH_READER_API_URL="${VITE_FRENCH_READER_API_URL:-http://127.0.0.1:5002/french-reader}"
 
+# Unsigned portable .app cannot persist Keychain "Always Allow" — prompts loop.
+# Use Stirling's disk token store instead (fine for local / no-cloud-login use).
+export STIRLING_PDF_TEST_FORCE_AUTH_KEYRING_FAIL=1
+export STIRLING_PDF_TEST_FORCE_REFRESH_KEYRING_FAIL=1
+
 if [[ -f "${ROOT}/VERSION.txt" ]]; then
   cat "${ROOT}/VERSION.txt"
   echo
@@ -25,8 +30,12 @@ fi
 
 "${ENGINE}" &
 ENGINE_PID=$!
+STIRLING_PID=""
 cleanup() {
   kill "${ENGINE_PID}" 2>/dev/null || true
+  if [[ -n "${STIRLING_PID}" ]]; then
+    kill "${STIRLING_PID}" 2>/dev/null || true
+  fi
 }
 trap cleanup EXIT INT TERM
 
@@ -62,11 +71,17 @@ if [[ ! -x "${MACOS_BIN}" ]]; then
 fi
 
 echo "Launching: $(basename "${APP}")"
-echo "  (If the window disappears, see troubleshooting below.)"
-open "${APP}"
+if [[ ! -x "${MACOS_BIN}" ]]; then
+  echo "[ERROR] Missing ${MACOS_BIN}"
+  read -r -p "Press Enter to close..."
+  exit 1
+fi
+# Launch binary directly (not `open`) so keychain-skip env vars above are inherited.
+"${MACOS_BIN}" &
+STIRLING_PID=$!
 
 sleep 3
-if pgrep -f "${APP}/Contents/MacOS" >/dev/null 2>&1 || pgrep -x stirling-pdf >/dev/null 2>&1; then
+if kill -0 "${STIRLING_PID}" 2>/dev/null || pgrep -x stirling-pdf >/dev/null 2>&1; then
   echo
   echo "Stirling PDF is running."
   echo "  • Check the Dock (PDF icon) or press Cmd+Tab to switch to Stirling PDF"
