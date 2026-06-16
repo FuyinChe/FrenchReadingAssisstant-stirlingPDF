@@ -24,12 +24,22 @@ export DISABLE_ADDITIONAL_FEATURES=true
 [[ -f "${INIT_SCRIPT}" ]] || { echo "[gradle-bootjar-portable] missing init script: ${INIT_SCRIPT}" >&2; exit 1; }
 
 run_gradle() {
+  # Core-only JAR (:stirling-pdf). Root `bootJar` still compiles :proprietary even when
+  # DISABLE_ADDITIONAL_FEATURES=true, which we do not need for portable desktop.
+  local -a GRADLE_ARGS=(
+    --init-script "${INIT_SCRIPT}"
+    :stirling-pdf:bootJar
+    --no-daemon
+    -PnoSpotless=true
+    -PjpdfiumPlatforms="${JPDFIUM_PLATFORMS}"
+    "${SPOTLESS_SKIP[@]}"
+  )
   if [[ -f "./gradlew.bat" ]] && { [[ "${OS:-}" == "Windows_NT" ]] || [[ "$(uname -s 2>/dev/null)" == MINGW* ]] || [[ "$(uname -s 2>/dev/null)" == MSYS* ]]; }; then
-    cmd //c gradlew.bat --init-script "${INIT_SCRIPT}" bootJar --no-daemon -PnoSpotless=true -PjpdfiumPlatforms="${JPDFIUM_PLATFORMS}" "${SPOTLESS_SKIP[@]}"
+    cmd //c gradlew.bat "${GRADLE_ARGS[@]}"
   else
-    ./gradlew --init-script "${INIT_SCRIPT}" bootJar --no-daemon -PnoSpotless=true -PjpdfiumPlatforms="${JPDFIUM_PLATFORMS}" "${SPOTLESS_SKIP[@]}"
+    ./gradlew "${GRADLE_ARGS[@]}"
   fi
 }
 
-printf '[gradle-bootjar-portable] bootJar (jpdfium=%s, spotless=skipped, init=%s)\n' "${JPDFIUM_PLATFORMS}" "$(basename "${INIT_SCRIPT}")"
+printf '[gradle-bootjar-portable] :stirling-pdf:bootJar (jpdfium=%s, spotless=skipped, init=%s)\n' "${JPDFIUM_PLATFORMS}" "$(basename "${INIT_SCRIPT}")"
 run_gradle
