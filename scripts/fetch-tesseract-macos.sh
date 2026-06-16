@@ -13,6 +13,8 @@ copy_tess_tree() {
   [[ -x "${bin}" ]] || return 1
   mkdir -p "${OUTPUT_DIR}/bin" "${OUTPUT_DIR}/share"
   cp -f "${bin}" "${OUTPUT_DIR}/bin/"
+  chmod u+rw "${OUTPUT_DIR}/bin/tesseract"
+  chmod +x "${OUTPUT_DIR}/bin/tesseract"
   if [[ -d "${prefix}/share/tessdata" ]]; then
     rm -rf "${OUTPUT_DIR}/share/tessdata"
     cp -R "${prefix}/share/tessdata" "${OUTPUT_DIR}/share/"
