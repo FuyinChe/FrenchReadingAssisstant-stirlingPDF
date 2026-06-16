@@ -176,7 +176,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\fetch-tesseract-windows.ps1
 | `python3: command not found` | 已修复：`install-extensions.sh` 使用 `python` 回退 |
 | `Tesseract not found` | workflow 会搜索 Chocolatey 与 Program Files 路径 |
 | `spotlessJava` / `build.shibboleth.net` timeout | Gradle 已加 `-x spotless*`（与 Docker 构建一致）；Spotless 仅格式化，不影响运行时 JAR |
-| `compileJava` / `build.shibboleth.net` timeout | `gradle-bootjar-portable.sh` 会临时把 `mavenCentral()` 排到 Shibboleth 前面，避免普通依赖先访问不稳定仓库 |
+| `compileJava` / `build.shibboleth.net` timeout | `gradle-bootjar-portable.sh` 会临时把 `mavenCentral()` 排到 Shibboleth 前面，并排除便携 core 不用的 `com.coveo:saml-client` 传递依赖 |
 | `task desktop:build` 失败 | 便携包不调用 `desktop:build`（MSI + 签名）；确认 **JDK 25**（含 `jlink`）、Rust、`task install` |
 | `TAURI_SIGNING_PRIVATE_KEY` | 仅完整 `desktop:build`（MSI + 自动更新签名）需要；便携 zip 使用 `npx tauri build --no-bundle` |
 | Node.js 20 弃用警告 | 可忽略；workflow 已设置 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` |
