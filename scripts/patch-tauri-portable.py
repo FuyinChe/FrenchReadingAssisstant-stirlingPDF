@@ -16,8 +16,10 @@ def patch(path: Path) -> None:
 
     updater = conf.get("plugins", {}).get("updater")
     if isinstance(updater, dict):
-        updater.pop("pubkey", None)
+        # pubkey is required at runtime by the updater plugin; only disable artifact signing
+        # and official Stirling update checks for this portable fork.
         updater["endpoints"] = []
+        updater["dialog"] = False
 
     path.write_text(json.dumps(conf, indent=2) + "\n", encoding="utf-8")
     print(f"[patch-tauri-portable] patched {path}")
