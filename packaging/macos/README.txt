@@ -69,4 +69,10 @@ ARCHITECTURE / 架构
 NETWORK / 网络
   PDF stays local; TTS and AI need internet.
 
+LICENSE / 许可证
+  LICENSE                    — MIT (French Reading Assistant original code)
+  THIRD-PARTY-NOTICES.md     — Stirling PDF + bundled components
+  licenses/STIRLING-PDF-LICENSE — Stirling PDF upstream license (MIT + mixed)
+
 Powered by Stirling PDF — https://github.com/Stirling-Tools/Stirling-PDF
+(French Reading Assistant is a third-party extension, not an official Stirling product.)

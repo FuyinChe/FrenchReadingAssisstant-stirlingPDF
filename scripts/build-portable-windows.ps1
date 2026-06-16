@@ -84,13 +84,9 @@ Write-Log "Staging Tesseract OCR..."
 & (Join-Path $Root "scripts/fetch-tesseract-windows.ps1") -OutputDir (Join-Path $StagingDir "tesseract")
 
 if (-not $SkipDesktop) {
-    Write-Log "Building Stirling Tauri desktop (task desktop:build:dev) — exe only, no MSI/updater signing..."
-    Push-Location (Join-Path $Root "stirling-upstream")
-    # Full desktop:build bundles MSI and signs updater artifacts (needs TAURI_SIGNING_PRIVATE_KEY).
-    # Portable zip only needs the release exe; upstream desktop:build:dev uses --no-bundle.
-    & task desktop:build:dev
-    if ($LASTEXITCODE -ne 0) { throw "task desktop:build:dev failed" }
-    Pop-Location
+    Write-Log "Building Stirling Tauri desktop (portable script) — exe only, no MSI/updater signing..."
+    & (Join-Path $Root "scripts/build-stirling-desktop-portable-windows.ps1")
+    if ($LASTEXITCODE -ne 0) { throw "build-stirling-desktop-portable-windows.ps1 failed" }
 
     $BundleRoot = Join-Path $Root "stirling-upstream/frontend/editor/src-tauri/target/release/bundle"
     $ReleaseDir = Join-Path $Root "stirling-upstream/frontend/editor/src-tauri/target/release"
@@ -158,6 +154,9 @@ if (-not $SkipDesktop) {
 
 Copy-Item -Force (Join-Path $Root "packaging/windows/Start French Reading Assistant.bat") $StagingDir
 Copy-Item -Force (Join-Path $Root "packaging/windows/README.txt") $StagingDir
+Copy-Item -Force (Join-Path $Root "LICENSE") $StagingDir
+Copy-Item -Force (Join-Path $Root "THIRD-PARTY-NOTICES.md") $StagingDir
+Copy-Item -Recurse -Force (Join-Path $Root "licenses") (Join-Path $StagingDir "licenses")
 
 $VersionInfo = Get-Content (Join-Path $Root "extensions/french-reader-engine/src/french_reader/_plugin_version.json") -Raw | ConvertFrom-Json
 $VersionText = @"

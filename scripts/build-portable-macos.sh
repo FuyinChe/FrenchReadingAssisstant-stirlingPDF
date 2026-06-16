@@ -93,6 +93,9 @@ fi
 
 cp -f "${ROOT}/packaging/macos/Start French Reading Assistant.command" "${STAGING_DIR}/"
 cp -f "${ROOT}/packaging/macos/README.txt" "${STAGING_DIR}/"
+cp -f "${ROOT}/LICENSE" "${STAGING_DIR}/"
+cp -f "${ROOT}/THIRD-PARTY-NOTICES.md" "${STAGING_DIR}/"
+cp -R "${ROOT}/licenses" "${STAGING_DIR}/"
 chmod +x "${STAGING_DIR}/Start French Reading Assistant.command"
 
 "$PYTHON" -c "

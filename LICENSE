@@ -1,0 +1,45 @@
+MIT License
+
+Copyright (c) 2025 Fuyin Che and French Reading Assistant contributors
+
+This license applies to **original work in this repository** outside of the
+`stirling-upstream/` git submodule, including but not limited to:
+
+- `extensions/french-reader-engine/`
+- `extensions/french-reader-frontend/`
+- `scripts/`, `packaging/`, `patches/`, and `docs/` authored for this project
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Stirling PDF (upstream base)
+
+This project bundles or integrates [**Stirling PDF**](https://github.com/Stirling-Tools/Stirling-PDF)
+via the `stirling-upstream/` submodule and portable desktop builds. Stirling PDF
+uses a **mixed license**: most of the codebase is MIT, while some directories
+(`engine/`, `app/proprietary/`, parts of `frontend/`, etc.) have separate terms.
+
+See:
+
+- [licenses/STIRLING-PDF-LICENSE](licenses/STIRLING-PDF-LICENSE) — upstream LICENSE text (verbatim)
+- [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) — distribution summary
+- [docs/plan/07-license-compliance.md](docs/plan/07-license-compliance.md) — compliance notes
+
+French Reading Assistant is a **third-party extension**, not an official Stirling PDF product.

@@ -103,4 +103,18 @@ Integration: minimal patches + FRENCH_READER_ENABLED flag
 
 Architecture: [docs/images/shared/architecture.md](docs/images/shared/architecture.md)
 
-License note: Stirling uses a mixed license; see [docs/plan/07-license-compliance.md](docs/plan/07-license-compliance.md).
+---
+
+## License / 许可证
+
+| Scope | License |
+|-------|---------|
+| **French Reading Assistant** (`extensions/`, `scripts/`, `packaging/`, `docs/` in this repo) | [**MIT**](LICENSE) |
+| **Stirling PDF** (`stirling-upstream/` submodule, bundled in portable `app/`) | **Mixed** — MIT for most code; see [licenses/STIRLING-PDF-LICENSE](licenses/STIRLING-PDF-LICENSE) and Stirling `engine/` / proprietary paths |
+| **Third-party** (Tesseract, JRE, PyPI deps) | [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) |
+
+French Reading Assistant is a **third-party extension** based on Stirling PDF; it is **not** an official Stirling PDF product.
+
+Details: [docs/plan/07-license-compliance.md](docs/plan/07-license-compliance.md) · [licenses/README.md](licenses/README.md)
+
+**中文：** 本仓库自研扩展部分为 **MIT**；基座 Stirling PDF 为**混合许可**（主体 MIT，部分目录另有条款）。便携包内附 `LICENSE` 与 `THIRD-PARTY-NOTICES.md`。

@@ -88,6 +88,13 @@ jobs:
           distribution: temurin
           java-version: "25"
 
+      - name: Ensure JDK tools on PATH
+        shell: pwsh
+        run: |
+          if (-not $env:JAVA_HOME) { throw "JAVA_HOME is not set after setup-java" }
+          "$env:JAVA_HOME\bin" >> $env:GITHUB_PATH
+          & "$env:JAVA_HOME\bin\jlink.exe" --version
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
@@ -141,6 +148,18 @@ jobs:
         working-directory: stirling-upstream
         shell: pwsh
         run: task install
+
+      - name: Verify portable desktop build script (Windows)
+        if: ${{ !inputs.skip_desktop }}
+        shell: pwsh
+        run: |
+          $content = Get-Content scripts/build-portable-windows.ps1 -Raw
+          if ($content -match 'task desktop:build[^:a-zA-Z-]') {
+            throw "build-portable-windows.ps1 must not invoke task desktop:build (use build-stirling-desktop-portable-windows.ps1)"
+          }
+          if (-not (Test-Path scripts/build-stirling-desktop-portable-windows.ps1)) {
+            throw "missing scripts/build-stirling-desktop-portable-windows.ps1"
+          }
 
       - name: Build Windows portable zip
         shell: pwsh
@@ -325,5 +344,7 @@ jobs:
             Docs:
             - [Windows portable packaging](https://github.com/${{ github.repository }}/blob/main/docs/deployment/windows-portable-packaging.md)
             - [macOS portable packaging](https://github.com/${{ github.repository }}/blob/main/docs/deployment/macos-portable-packaging.md)
+
+            **License:** French Reading Assistant extensions are [MIT](https://github.com/${{ github.repository }}/blob/main/LICENSE). Bundled Stirling PDF follows [Stirling's mixed license](https://github.com/Stirling-Tools/Stirling-PDF/blob/main/LICENSE) — see `THIRD-PARTY-NOTICES.md` in each zip. Not an official Stirling PDF product.
 
             **Powered by [Stirling PDF](https://github.com/Stirling-Tools/Stirling-PDF)**

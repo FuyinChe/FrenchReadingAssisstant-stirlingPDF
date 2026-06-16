@@ -18,6 +18,9 @@
 French-Reading-Assistant-0.5.0-macos-arm64/
 ├── Start French Reading Assistant.command   ← 双击启动
 ├── README.txt
+├── LICENSE
+├── THIRD-PARTY-NOTICES.md
+├── licenses/STIRLING-PDF-LICENSE
 ├── VERSION.txt
 ├── app/
 │   └── Stirling PDF.app

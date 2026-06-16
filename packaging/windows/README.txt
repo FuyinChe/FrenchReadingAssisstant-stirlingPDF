@@ -29,4 +29,10 @@ VERSION / 版本
 SUPPORT / 帮助
   https://github.com/FuyinChe/FrenchReadingAssisstant-stirlingPDF
 
+LICENSE / 许可证
+  LICENSE              — MIT (French Reading Assistant original code)
+  THIRD-PARTY-NOTICES.md — Stirling PDF + bundled components
+  licenses\STIRLING-PDF-LICENSE — Stirling PDF upstream license (MIT + mixed)
+
 Powered by Stirling PDF — https://github.com/Stirling-Tools/Stirling-PDF
+(French Reading Assistant is a third-party extension, not an official Stirling product.)

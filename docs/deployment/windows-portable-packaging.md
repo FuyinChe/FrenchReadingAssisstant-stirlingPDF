@@ -17,6 +17,9 @@ dist/portable-windows/
 └── French-Reading-Assistant-{version}-windows-x64.zip
     ├── Start French Reading Assistant.bat   ← 用户双击这个
     ├── README.txt
+    ├── LICENSE                              ← MIT（本扩展原创部分）
+    ├── THIRD-PARTY-NOTICES.md               ← Stirling + 第三方组件
+    ├── licenses\STIRLING-PDF-LICENSE        ← Stirling 上游许可全文
     ├── VERSION.txt                          ← 插件版本与 build id
     ├── app\                                 ← Stirling 桌面（exe + JRE + JAR）
     │   ├── stirling-pdf.exe
@@ -135,7 +138,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\bundle-sidecar-windows.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\fetch-tesseract-windows.ps1
 ```
 
-首次完整构建 **约 20–60 分钟**（含 `task desktop:build:dev`，仅编译 exe，不打包 MSI）。
+首次完整构建 **约 20–60 分钟**（含 `build-stirling-desktop-portable-windows.ps1`：Gradle bootJar + jlink + Tauri exe，不打包 MSI）。
 
 打包结束时会自动运行 `scripts/verify-portable-staging.ps1`（Tesseract、Stirling JRE/JAR、引擎 `ocr_ready` / `bubble_ready`）。详见 [portable-dependency-checklist.md](portable-dependency-checklist.md)。
 
@@ -172,8 +175,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\fetch-tesseract-windows.ps1
 |------|------|
 | `python3: command not found` | 已修复：`install-extensions.sh` 使用 `python` 回退 |
 | `Tesseract not found` | workflow 会搜索 Chocolatey 与 Program Files 路径 |
-| `task desktop:build` 失败 | 便携包使用 `desktop:build:dev`（仅 exe，无需 `TAURI_SIGNING_PRIVATE_KEY`）；若仍失败，确认 **uv**、JDK 25、Rust、`task install` |
-| `TAURI_SIGNING_PRIVATE_KEY` | 仅完整 `desktop:build`（MSI + 自动更新签名）需要；便携 zip 已改用 `desktop:build:dev` |
+| `CommandNotFoundException` / `jlink` / `cp` | 勿用 `task desktop:build:dev`（上游 jlink 步骤为 Unix 命令）；脚本使用 `build-stirling-desktop-portable-windows.ps1` |
+| `task desktop:build` 失败 | 便携包不调用 `desktop:build`（MSI + 签名）；确认 **JDK 25**（含 `jlink`）、Rust、`task install` |
+| `TAURI_SIGNING_PRIVATE_KEY` | 仅完整 `desktop:build`（MSI + 自动更新签名）需要；便携 zip 使用 `npx tauri build --no-bundle` |
 | Node.js 20 弃用警告 | 可忽略；workflow 已设置 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` |
 
 ---
@@ -199,8 +203,9 @@ Invoke-RestMethod http://127.0.0.1:5002/french-reader/version
 | 问题 | 处理 |
 |------|------|
 | `git submodule` 失败 | 检查网络与 GitHub 访问 |
-| `task desktop:build` 失败 | 确认 JDK 25、Rust、`task install` 在 stirling-upstream 可运行 |
-| `TAURI_SIGNING_PRIVATE_KEY` | 便携包使用 `desktop:build:dev`，无需 Stirling 更新签名私钥 |
+| `CommandNotFoundException`（`jlink`/`cp`） | 使用 `scripts/build-stirling-desktop-portable-windows.ps1`，勿用 `task desktop:build:dev` |
+| `task desktop:build` 失败 | 确认 JDK 25（`JAVA_HOME\bin\jlink.exe`）、Rust、`task install` 在 stirling-upstream 可运行 |
+| `TAURI_SIGNING_PRIVATE_KEY` | 便携包不调用 `desktop:build`，无需 Stirling 更新签名私钥 |
 | Tesseract 未找到 | 安装 UB-Mannheim Tesseract，确认 `fra` 语言包 |
 | PyInstaller 失败 | 删除 `dist/build-venv-windows` 后重跑 `bundle-sidecar-windows.ps1` |
 | `app\` 为空 | 重新运行 `build-portable-windows.ps1`；`app\` 须含 `stirling-pdf.exe`、`runtime\jre\`、`libs\*.jar` |
