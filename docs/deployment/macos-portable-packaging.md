@@ -51,6 +51,7 @@ French-Reading-Assistant-0.5.0-macos-arm64/
 
 | 现象 | 处理 |
 |------|------|
+| `spotlessJava` / `build.shibboleth.net` | 勿用 `task desktop:prepare`；`build-stirling-desktop-portable.sh` 对 Gradle 加 `-x spotless*` |
 | `failed to bundle project: No such file or directory` | 勿用 `task desktop:build`；脚本使用 `npx tauri build --target … --bundles app`，并 `unset CARGO_BUILD_TARGET` |
 | Intel (x64) 找不到 `.app` | 产物在 `target/x86_64-apple-darwin/release/bundle/macos/` |
 | Apple Silicon (arm64) 打包失败 | 与 x64 相同，必须显式 `--target aarch64-apple-darwin`（不要只靠 `CARGO_BUILD_TARGET`） |

@@ -175,7 +175,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\fetch-tesseract-windows.ps1
 |------|------|
 | `python3: command not found` | 已修复：`install-extensions.sh` 使用 `python` 回退 |
 | `Tesseract not found` | workflow 会搜索 Chocolatey 与 Program Files 路径 |
-| `CommandNotFoundException` / `jlink` / `cp` | 勿用 `task desktop:build:dev`（上游 jlink 步骤为 Unix 命令）；脚本使用 `build-stirling-desktop-portable-windows.ps1` |
+| `spotlessJava` / `build.shibboleth.net` timeout | Gradle 已加 `-x spotless*`（与 Docker 构建一致）；Spotless 仅格式化，不影响运行时 JAR |
 | `task desktop:build` 失败 | 便携包不调用 `desktop:build`（MSI + 签名）；确认 **JDK 25**（含 `jlink`）、Rust、`task install` |
 | `TAURI_SIGNING_PRIVATE_KEY` | 仅完整 `desktop:build`（MSI + 自动更新签名）需要；便携 zip 使用 `npx tauri build --no-bundle` |
 | Node.js 20 弃用警告 | 可忽略；workflow 已设置 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` |
