@@ -100,6 +100,16 @@ if not s.get('bubble_ready'):
 print('ocr_ready=%s bubble_ready=%s' % (s.get('ocr_ready'), s.get('bubble_ready')))
 " || fail "Engine smoke test failed"
   log "Engine smoke test OK"
+
+  if ! curl -fsS -o /dev/null -X OPTIONS \
+    -H 'Origin: https://tauri.localhost' \
+    -H 'Access-Control-Request-Method: POST' \
+    -H 'Access-Control-Request-Headers: content-type' \
+    -w '%{http_code}' \
+    "http://127.0.0.1:5002/french-reader/ocr/region" 2>/dev/null | grep -qE '^(200|204)$'; then
+    fail "CORS preflight failed for Tauri origin (OPTIONS /ocr/region)"
+  fi
+  log "CORS preflight OK for https://tauri.localhost"
 fi
 
 log "All checks passed for ${STAGING_DIR}"

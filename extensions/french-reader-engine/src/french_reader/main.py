@@ -12,6 +12,12 @@ if settings.cors_origins:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
+        # Tauri / WebView2 desktop origins vary by OS (tauri.localhost, ipc.localhost, ports).
+        allow_origin_regex=(
+            r"^https?://([\w-]+\.)?localhost(:\d+)?$"
+            r"|^https?://127\.0\.0\.1(:\d+)?$"
+            r"|^tauri://"
+        ),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
