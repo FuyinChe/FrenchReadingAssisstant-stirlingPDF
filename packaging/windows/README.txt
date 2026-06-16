@@ -23,6 +23,12 @@ OCR DLL errors (libtiff-6.dll, libjpeg-8.dll, …)?
   - Use a newer zip build, or copy all *.dll from a full Tesseract install
     into the tesseract\ folder next to tesseract.exe
 
+OCR failed / 503 / "Could not initialize tesseract"?
+  - Older zips set TESSDATA_PREFIX to tesseract\ instead of tesseract\tessdata
+  - Fix: edit Start French Reading Assistant.bat line 7 to:
+      set "TESSDATA_PREFIX=%ROOT%tesseract\tessdata"
+    Or download a newer zip build with this fix
+
 VERSION / 版本
   See VERSION.txt in this folder.
 

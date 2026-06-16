@@ -4,7 +4,7 @@ chcp 65001 >nul
 
 set "ROOT=%~dp0"
 set "PATH=%ROOT%tesseract;%PATH%"
-set "TESSDATA_PREFIX=%ROOT%tesseract\"
+set "TESSDATA_PREFIX=%ROOT%tesseract\tessdata"
 set "FRENCH_READER_ENABLED=true"
 set "VITE_FRENCH_READER_ENABLED=true"
 set "VITE_FRENCH_READER_API_URL=http://127.0.0.1:5002/french-reader"
