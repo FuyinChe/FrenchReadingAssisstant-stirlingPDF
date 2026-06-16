@@ -87,6 +87,8 @@ jobs:
         with:
           distribution: temurin
           java-version: "25"
+          cache: gradle
+          cache-dependency-path: stirling-upstream/**/build.gradle*
 
       - name: Ensure JDK tools on PATH
         shell: pwsh
@@ -160,6 +162,10 @@ jobs:
           if (-not (Test-Path scripts/build-stirling-desktop-portable-windows.ps1)) {
             throw "missing scripts/build-stirling-desktop-portable-windows.ps1"
           }
+          $winDesktop = Get-Content scripts/build-stirling-desktop-portable-windows.ps1 -Raw
+          if ($winDesktop -notmatch 'gradle-bootjar-portable\.sh') {
+            throw "build-stirling-desktop-portable-windows.ps1 must call gradle-bootjar-portable.sh"
+          }
 
       - name: Build Windows portable zip
         shell: pwsh
@@ -230,6 +236,8 @@ jobs:
         with:
           distribution: temurin
           java-version: "25"
+          cache: gradle
+          cache-dependency-path: stirling-upstream/**/build.gradle*
 
       - name: Setup Rust (${{ matrix.rust_target }})
         uses: dtolnay/rust-toolchain@stable
@@ -271,6 +279,14 @@ jobs:
           chmod +x scripts/build-stirling-desktop-portable.sh
           if grep -qE 'task desktop:build[^:a-zA-Z-]' scripts/build-portable-macos.sh; then
             echo "build-portable-macos.sh must not invoke task desktop:build (use build-stirling-desktop-portable.sh)"
+            exit 1
+          fi
+          if grep -v '^[[:space:]]*#' scripts/build-stirling-desktop-portable.sh | grep -qE '\btask desktop:prepare\b'; then
+            echo "build-stirling-desktop-portable.sh must not invoke task desktop:prepare (use gradle-bootjar-portable.sh + jlink)"
+            exit 1
+          fi
+          if ! grep -q 'gradle-bootjar-portable.sh' scripts/build-stirling-desktop-portable.sh; then
+            echo "build-stirling-desktop-portable.sh must call scripts/gradle-bootjar-portable.sh"
             exit 1
           fi
           test -x scripts/build-stirling-desktop-portable.sh

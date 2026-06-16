@@ -1,8 +1,7 @@
 # Build Stirling Tauri desktop exe for portable zip (no MSI/updater signing).
 #
-# Upstream `task desktop:build:dev` runs jlink steps with Unix `cp`/`mkdir` and bare
-# `jlink` on PATH; both fail on Windows CI. This script mirrors desktop:prepare + build:dev
-# using PowerShell and JAVA_HOME\bin\jlink.exe.
+# Upstream desktop:build:dev uses Unix cp/mkdir and bare jlink on Windows CI.
+# Uses gradle-bootjar-portable.sh + explicit jlink instead of task desktop:prepare.
 #
 # Usage:
 #   .\scripts\build-stirling-desktop-portable-windows.ps1
@@ -53,11 +52,10 @@ if ($LASTEXITCODE -ne 0) { throw "build-provisioner.mjs failed" }
 Pop-Location
 
 Write-Log "Building backend bootJar (windows-x64 JPDFium natives)..."
-Push-Location $Stirling
-$env:DISABLE_ADDITIONAL_FEATURES = "true"
-& .\gradlew.bat bootJar --no-daemon -PjpdfiumPlatforms=windows-x64
-if ($LASTEXITCODE -ne 0) { throw "gradlew bootJar failed" }
-Pop-Location
+$GradleScript = Join-Path $Root "scripts/gradle-bootjar-portable.sh"
+if (-not (Test-Path $GradleScript)) { throw "missing $GradleScript" }
+& bash $GradleScript windows-x64
+if ($LASTEXITCODE -ne 0) { throw "gradle-bootjar-portable.sh failed" }
 
 $LibsDir = Join-Path $TauriSrc "libs"
 New-Item -ItemType Directory -Force -Path $LibsDir | Out-Null
