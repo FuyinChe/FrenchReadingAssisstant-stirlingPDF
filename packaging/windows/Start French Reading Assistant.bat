@@ -9,7 +9,7 @@ set "FRENCH_READER_ENABLED=true"
 set "VITE_FRENCH_READER_ENABLED=true"
 set "VITE_FRENCH_READER_API_URL=http://127.0.0.1:5002/french-reader"
 rem Stirling Tauri WebView needs these origins for OCR POST (CORS preflight).
-if not defined FRENCH_READER_CORS_ORIGINS set "FRENCH_READER_CORS_ORIGINS=http://localhost:5173,http://localhost:8080,http://127.0.0.1:8080,http://127.0.0.1:5173,https://tauri.localhost,http://tauri.localhost,https://asset.localhost,http://asset.localhost"
+if not defined FRENCH_READER_CORS_ORIGINS set "FRENCH_READER_CORS_ORIGINS=http://localhost:5173,http://localhost:8080,http://127.0.0.1:8080,http://127.0.0.1:5173,https://tauri.localhost,http://tauri.localhost,https://asset.localhost,http://asset.localhost,https://ipc.localhost,http://ipc.localhost"
 
 if exist "%ROOT%VERSION.txt" type "%ROOT%VERSION.txt"
 echo.

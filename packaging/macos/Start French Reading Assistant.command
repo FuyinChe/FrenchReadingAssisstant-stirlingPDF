@@ -1,7 +1,25 @@
 #!/bin/bash
 # French Reading Assistant — macOS portable launcher
+set +m
 cd "$(dirname "$0")" || exit 1
 ROOT="$PWD"
+
+chmod -R u+w "${ROOT}" 2>/dev/null || true
+xattr -dr com.apple.quarantine "${ROOT}" 2>/dev/null || true
+
+if xattr -l "${ROOT}/engine/french-reader-engine" 2>/dev/null | grep -q 'com.apple.quarantine'; then
+  echo "[ERROR] Folder is still quarantined (common for Downloads)."
+  echo "Do NOT double-click this file. Run once in Terminal:"
+  echo
+  echo "  cd \"${ROOT}\""
+  echo "  chmod -R u+w ."
+  echo "  xattr -cr ."
+  echo "  chmod +x \"Start French Reading Assistant.command\""
+  echo "  ./Start\\ French\\ Reading\\ Assistant.command"
+  echo
+  read -r -p "Press Enter to close..."
+  exit 1
+fi
 
 export PATH="${ROOT}/tesseract/bin:${PATH}"
 export DYLD_LIBRARY_PATH="${ROOT}/tesseract/lib${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}"
@@ -9,11 +27,8 @@ export TESSDATA_PREFIX="${ROOT}/tesseract/share/tessdata"
 export FRENCH_READER_ENABLED=true
 export VITE_FRENCH_READER_ENABLED=true
 export VITE_FRENCH_READER_API_URL="${VITE_FRENCH_READER_API_URL:-http://127.0.0.1:5002/french-reader}"
-# Stirling Tauri WebView origin is not localhost:5173 — allow desktop + dev origins for OCR POST.
-export FRENCH_READER_CORS_ORIGINS="${FRENCH_READER_CORS_ORIGINS:-http://localhost:5173,http://localhost:8080,http://127.0.0.1:8080,http://127.0.0.1:5173,https://tauri.localhost,http://tauri.localhost,https://asset.localhost,http://asset.localhost}"
+export FRENCH_READER_CORS_ORIGINS="${FRENCH_READER_CORS_ORIGINS:-http://localhost:5173,http://localhost:8080,http://127.0.0.1:8080,http://127.0.0.1:5173,https://tauri.localhost,http://tauri.localhost,https://asset.localhost,http://asset.localhost,https://ipc.localhost,http://ipc.localhost}"
 
-# Unsigned portable .app cannot persist Keychain "Always Allow" — prompts loop.
-# Use Stirling's disk token store instead (fine for local / no-cloud-login use).
 export STIRLING_PDF_TEST_FORCE_AUTH_KEYRING_FAIL=1
 export STIRLING_PDF_TEST_FORCE_REFRESH_KEYRING_FAIL=1
 
@@ -42,9 +57,16 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+# Wait without curl/python (quarantine can SIGKILL those in a tight loop → "Killed: 9" spam).
 READY=0
 for _ in $(seq 1 45); do
-  if curl -fsS "http://127.0.0.1:5002/health" >/dev/null 2>&1; then
+  if ! kill -0 "${ENGINE_PID}" 2>/dev/null; then
+    echo "[ERROR] French Reader engine exited while starting."
+    echo "Run in Terminal: cd \"${ROOT}\" && xattr -cr . && chmod -R u+w ."
+    read -r -p "Press Enter to close..."
+    exit 1
+  fi
+  if /usr/sbin/lsof -nP -iTCP:5002 -sTCP:LISTEN -t >/dev/null 2>&1; then
     READY=1
     break
   fi
@@ -64,7 +86,6 @@ if [[ -z "${APP}" ]]; then
   exit 1
 fi
 
-# Portable .app is unsigned; clear quarantine on the bundle (not only the .command file).
 chmod -R u+w "${APP}" 2>/dev/null || true
 xattr -dr com.apple.quarantine "${APP}" 2>/dev/null || true
 
@@ -79,7 +100,6 @@ if [[ ! -x "${MACOS_BIN}" ]]; then
   read -r -p "Press Enter to close..."
   exit 1
 fi
-# Launch binary directly (not `open`) so keychain-skip env vars above are inherited.
 "${MACOS_BIN}" &
 STIRLING_PID=$!
 
@@ -88,16 +108,10 @@ if kill -0 "${STIRLING_PID}" 2>/dev/null || pgrep -x stirling-pdf >/dev/null 2>&
   echo
   echo "Stirling PDF is running."
   echo "  • Check the Dock (PDF icon) or press Cmd+Tab to switch to Stirling PDF"
-  echo "  • The window may be behind other apps"
 else
   echo
-  echo "[WARN] Stirling PDF may have quit immediately (window flash)."
-  echo "Try in Terminal (keep this engine window open in another tab):"
-  echo "  cd \"${ROOT}\""
-  echo "  xattr -dr com.apple.quarantine \"${APP}\""
-  echo "  \"${MACOS_BIN}\""
-  echo "Or: Finder → right-click app/$(basename "${APP}") → Open → Open"
-  echo "Then check Console.app for crash logs if it still closes."
+  echo "[WARN] Stirling PDF may have quit immediately."
+  echo "Try: right-click app/$(basename "${APP}") → Open → Open"
 fi
 
 echo

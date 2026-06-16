@@ -124,6 +124,21 @@ if ($SmokeTestEngine) {
         if (-not $status.ocr_ready) { Fail "Engine ocr_ready=false — tesseract/pytesseract not usable" }
         if (-not $status.bubble_ready) { Fail "Engine bubble_ready=false — OpenCV (cv2) not bundled in PyInstaller exe" }
         Write-Log "Engine smoke test OK: ocr_ready=$($status.ocr_ready), bubble_ready=$($status.bubble_ready)"
+
+        $corsHeaders = @{
+            Origin = 'https://tauri.localhost'
+            'Access-Control-Request-Method' = 'POST'
+            'Access-Control-Request-Headers' = 'content-type'
+        }
+        try {
+            $preflight = Invoke-WebRequest -Uri "http://127.0.0.1:5002/french-reader/ocr/region" -Method OPTIONS -Headers $corsHeaders -TimeoutSec 5 -UseBasicParsing
+            if ($preflight.StatusCode -ge 400) {
+                Fail "CORS preflight failed for Tauri origin (OPTIONS /ocr/region returned $($preflight.StatusCode))"
+            }
+            Write-Log "CORS preflight OK for https://tauri.localhost"
+        } catch {
+            Fail "CORS preflight failed for Tauri origin: $($_.Exception.Message)"
+        }
     } finally {
         if ($proc -and -not $proc.HasExited) {
             Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue

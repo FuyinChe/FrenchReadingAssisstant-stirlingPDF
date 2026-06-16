@@ -3,11 +3,10 @@
 
 import pathlib
 
-from PyInstaller.utils.hooks import collect_dynamic_libs, collect_submodules
+from PyInstaller.utils.hooks import collect_all, collect_submodules
 
 
 def _repo_root() -> pathlib.Path:
-    # SPEC = full path to this .spec file; SPECPATH = directory containing it.
     spec_file = pathlib.Path(globals().get("SPEC", SPECPATH)).resolve()
     start = spec_file.parent if spec_file.is_file() else spec_file
     for candidate in (start, *start.parents):
@@ -22,7 +21,6 @@ version_json = engine_src / "french_reader" / "_plugin_version.json"
 
 hiddenimports = collect_submodules("uvicorn")
 hiddenimports += collect_submodules("fastapi")
-hiddenimports += collect_submodules("cv2")
 hiddenimports += [
     "french_reader.main",
     "french_reader.router",
@@ -41,13 +39,14 @@ hiddenimports += [
     "reportlab",
 ]
 
-cv2_binaries = collect_dynamic_libs("cv2")
+cv2_datas, cv2_binaries, cv2_hidden = collect_all("cv2")
+hiddenimports += cv2_hidden
 
 a = Analysis(
     [str(root / "packaging" / "windows" / "engine-main.py")],
     pathex=[str(engine_src)],
     binaries=cv2_binaries,
-    datas=[(str(version_json), "french_reader")],
+    datas=[(str(version_json), "french_reader")] + cv2_datas,
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
@@ -68,7 +67,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=True,
