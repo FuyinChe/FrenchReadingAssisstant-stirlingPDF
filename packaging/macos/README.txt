@@ -58,6 +58,10 @@ FIRST RUN / 首次使用
          app/Stirling-PDF.app/Contents/MacOS/stirling-pdf
     3. 仍失败：打开「控制台」(Console.app) 搜索 stirling
 
+  OCR 框选后显示失败 / Load failed？
+    • 旧包未允许 Stirling 桌面 WebView 的 CORS 来源
+    • 请使用新 zip（启动脚本会设置 FRENCH_READER_CORS_ORIGINS）
+
 ARCHITECTURE / 架构
   Apple Silicon (arm64): French-Reading-Assistant-*-macos-arm64.zip
   Intel Mac (x64):       French-Reading-Assistant-*-macos-x64.zip

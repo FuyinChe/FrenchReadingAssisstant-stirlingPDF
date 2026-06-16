@@ -1,0 +1,329 @@
+# Manual portable ZIP builds for Windows + macOS (arm64 + x64) → one GitHub Release.
+# Trigger: Actions → "Release Portable" → Run workflow
+name: Release Portable
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Git tag (e.g. v0.5.0). Required when creating a GitHub Release."
+        required: false
+        type: string
+      create_github_release:
+        description: "Create GitHub Release and attach all platform zips"
+        required: true
+        type: boolean
+        default: true
+      draft_release:
+        description: "Create release as draft (review before publishing)"
+        required: true
+        type: boolean
+        default: true
+      skip_desktop:
+        description: "Skip Stirling Tauri build (engine-only smoke test)"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-portable-${{ inputs.release_tag || 'snapshot' }}
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  FRENCH_READER_ENABLED: "true"
+  VITE_FRENCH_READER_ENABLED: "true"
+  VITE_FRENCH_READER_API_URL: http://127.0.0.1:5002/french-reader
+  FRENCH_READER_SKIP_ENGINE_INSTALL: "true"
+
+jobs:
+  validate:
+    name: Validate inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check release_tag when publishing
+        run: |
+          if [ "${{ inputs.create_github_release }}" = "true" ] && [ -z "${{ inputs.release_tag }}" ]; then
+            echo "release_tag is required when create_github_release is true (e.g. v0.5.0)"
+            exit 1
+          fi
+          if [ -n "${{ inputs.release_tag }}" ] && ! echo "${{ inputs.release_tag }}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "::warning::release_tag should look like v0.5.0"
+          fi
+
+  build-windows-portable:
+    name: Build portable zip (Windows x64)
+    needs: validate
+    runs-on: windows-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout (with Stirling submodule)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13.8"
+          enable-cache: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Chocolatey tools (Task, Tesseract)
+        shell: pwsh
+        run: |
+          choco install go-task tesseract -y --no-progress
+          "C:\ProgramData\chocolatey\bin" >> $env:GITHUB_PATH
+
+      - name: Locate Tesseract OCR
+        shell: pwsh
+        run: |
+          $candidates = @(
+            "C:\Program Files\Tesseract-OCR",
+            "C:\ProgramData\chocolatey\lib\tesseract\tools"
+          )
+          $tess = $candidates | Where-Object { Test-Path (Join-Path $_ "tesseract.exe") } | Select-Object -First 1
+          if (-not $tess) {
+            throw "tesseract.exe not found. Checked: $($candidates -join ', ')"
+          }
+          $tessExe = Join-Path $tess "tesseract.exe"
+          "TESSDATA_PREFIX=$tess\tessdata" >> $env:GITHUB_ENV
+          "TESSERACT_HOME=$tess" >> $env:GITHUB_ENV
+          $tess >> $env:GITHUB_PATH
+          Write-Host "Using Tesseract at $tess"
+          & $tessExe --version
+          & $tessExe --list-langs
+
+      - name: Verify build toolchain
+        shell: pwsh
+        run: |
+          python --version
+          node --version
+          java -version
+          cargo --version
+          task --version
+          uv --version
+          tesseract --version
+
+      - name: Sync plugin version metadata
+        run: python scripts/sync-plugin-version.py --platform windows-x64
+
+      - name: Install extensions into Stirling
+        shell: bash
+        run: |
+          chmod +x scripts/*.sh
+          ./scripts/install-extensions.sh
+
+      - name: Install Stirling build dependencies
+        if: ${{ !inputs.skip_desktop }}
+        working-directory: stirling-upstream
+        shell: pwsh
+        run: task install
+
+      - name: Build Windows portable zip
+        shell: pwsh
+        run: |
+          $args = @()
+          if ('${{ inputs.skip_desktop }}' -eq 'true') { $args += '-SkipDesktop' }
+          & "${{ github.workspace }}/scripts/build-portable-windows.ps1" @args
+
+      - name: List build output
+        shell: pwsh
+        run: Get-ChildItem -Recurse dist/portable-windows | Format-Table FullName, Length
+
+      - name: Upload portable zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable-windows-${{ inputs.release_tag || 'snapshot' }}
+          path: dist/portable-windows/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  build-macos-portable:
+    name: Build portable zip (${{ matrix.platform }})
+    needs: validate
+    runs-on: macos-14
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            platform: macos-arm64
+            python_arch: arm64
+            rust_target: aarch64-apple-darwin
+          - arch: x64
+            platform: macos-x64
+            python_arch: x64
+            rust_target: x86_64-apple-darwin
+
+    steps:
+      - name: Checkout (with Stirling submodule)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rosetta (Intel / x64 build on Apple Silicon runner)
+        if: matrix.arch == 'x64'
+        run: softwareupdate --install-rosetta --agree-to-license
+
+      - name: Setup Python (${{ matrix.python_arch }})
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: ${{ matrix.python_arch }}
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13.8"
+          enable-cache: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Setup Rust (${{ matrix.rust_target }})
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_target }}
+
+      - name: Install Homebrew tools
+        run: |
+          brew install go-task tesseract tesseract-lang
+          tesseract --version
+          tesseract --list-langs | head -20
+
+      - name: Verify build toolchain
+        run: |
+          python --version
+          node --version
+          java -version
+          cargo --version
+          task --version
+          uv --version
+          uname -m
+
+      - name: Sync plugin version metadata
+        run: python scripts/sync-plugin-version.py --platform ${{ matrix.platform }}
+
+      - name: Install extensions into Stirling
+        run: |
+          chmod +x scripts/*.sh packaging/macos/*.command
+          ./scripts/install-extensions.sh
+
+      - name: Install Stirling build dependencies
+        if: ${{ !inputs.skip_desktop }}
+        working-directory: stirling-upstream
+        run: task install
+
+      - name: Verify portable desktop build script
+        if: ${{ !inputs.skip_desktop }}
+        run: |
+          chmod +x scripts/build-stirling-desktop-portable.sh
+          if grep -qE 'task desktop:build[^:a-zA-Z-]' scripts/build-portable-macos.sh; then
+            echo "build-portable-macos.sh must not invoke task desktop:build (use build-stirling-desktop-portable.sh)"
+            exit 1
+          fi
+          test -x scripts/build-stirling-desktop-portable.sh
+
+      - name: Build macOS portable zip (${{ matrix.platform }})
+        run: |
+          chmod +x scripts/build-stirling-desktop-portable.sh
+          ARGS=(--arch "${{ matrix.arch }}")
+          if [ "${{ inputs.skip_desktop }}" = "true" ]; then
+            ARGS+=(--skip-desktop)
+          fi
+          ./scripts/build-portable-macos.sh "${ARGS[@]}"
+
+      - name: List build output
+        run: ls -la dist/portable-macos/
+
+      - name: Upload portable zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable-${{ matrix.platform }}-${{ inputs.release_tag || 'snapshot' }}
+          path: dist/portable-macos/*-${{ matrix.platform }}.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-release:
+    name: Publish GitHub Release (all platforms)
+    needs: [build-windows-portable, build-macos-portable]
+    if: inputs.create_github_release && inputs.release_tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download portable zip artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: portable-*
+          path: dist/release-assets
+          merge-multiple: true
+
+      - name: List release assets
+        run: find dist/release-assets -type f -name '*.zip' | sort
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.release_tag }}
+          name: French Reading Assistant ${{ inputs.release_tag }} (portable)
+          draft: ${{ inputs.draft_release }}
+          prerelease: true
+          generate_release_notes: true
+          files: dist/release-assets/**/*.zip
+          body: |
+            ## Portable builds (解压即用)
+
+            Download the zip for your platform:
+
+            | Platform | File |
+            |----------|------|
+            | Windows x64 | `French-Reading-Assistant-*-windows-x64.zip` |
+            | macOS Apple Silicon (M1/M2/M3) | `French-Reading-Assistant-*-macos-arm64.zip` |
+            | macOS Intel | `French-Reading-Assistant-*-macos-x64.zip` |
+
+            ### Windows
+            1. Extract the archive
+            2. Double-click **`Start French Reading Assistant.bat`**
+            3. SmartScreen → **More info** → **Run anyway**
+
+            ### macOS
+            1. Extract the archive (do not run from inside the zip)
+            2. First time: `chmod -R u+w . && xattr -cr .` in Terminal, then run **`Start French Reading Assistant.command`**
+            3. Leave the Terminal window open while using the app
+
+            Docs:
+            - [Windows portable packaging](https://github.com/${{ github.repository }}/blob/main/docs/deployment/windows-portable-packaging.md)
+            - [macOS portable packaging](https://github.com/${{ github.repository }}/blob/main/docs/deployment/macos-portable-packaging.md)
+
+            **Powered by [Stirling PDF](https://github.com/Stirling-Tools/Stirling-PDF)**

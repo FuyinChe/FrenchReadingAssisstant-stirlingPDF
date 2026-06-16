@@ -8,6 +8,8 @@ export TESSDATA_PREFIX="${ROOT}/tesseract/share/tessdata"
 export FRENCH_READER_ENABLED=true
 export VITE_FRENCH_READER_ENABLED=true
 export VITE_FRENCH_READER_API_URL="${VITE_FRENCH_READER_API_URL:-http://127.0.0.1:5002/french-reader}"
+# Stirling Tauri WebView origin is not localhost:5173 — allow desktop + dev origins for OCR POST.
+export FRENCH_READER_CORS_ORIGINS="${FRENCH_READER_CORS_ORIGINS:-http://localhost:5173,http://localhost:8080,http://127.0.0.1:8080,http://127.0.0.1:5173,https://tauri.localhost,http://tauri.localhost,https://asset.localhost,http://asset.localhost}"
 
 # Unsigned portable .app cannot persist Keychain "Always Allow" — prompts loop.
 # Use Stirling's disk token store instead (fine for local / no-cloud-login use).

@@ -9,7 +9,11 @@ class Settings(BaseSettings):
     enabled: bool = True
     host: str = "0.0.0.0"
     port: int = 5002
-    cors_origins: str = "http://localhost:5173,http://localhost:8080"
+    cors_origins: str = (
+        "http://localhost:5173,http://localhost:8080,http://127.0.0.1:8080,"
+        "http://127.0.0.1:5173,https://tauri.localhost,http://tauri.localhost,"
+        "https://asset.localhost,http://asset.localhost"
+    )
     tts_max_chars: int = 5000
     tts_default_voice: str = "fr-FR-DeniseNeural"
     ai_max_chars: int = 5000

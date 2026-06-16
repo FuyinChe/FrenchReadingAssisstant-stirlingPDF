@@ -18,7 +18,10 @@ dist/portable-windows/
     ├── Start French Reading Assistant.bat   ← 用户双击这个
     ├── README.txt
     ├── VERSION.txt                          ← 插件版本与 build id
-    ├── app\                                 ← Stirling 桌面 .exe
+    ├── app\                                 ← Stirling 桌面（exe + JRE + JAR）
+    │   ├── stirling-pdf.exe
+    │   ├── runtime\jre\                   ← 内置 Java（必需）
+    │   └── libs\stirling-pdf-*.jar        ← Stirling 后端（必需）
     ├── engine\
     │   └── french-reader-engine.exe         ← OCR / TTS / AI
     └── tesseract\                           ← OCR（含 fra 法语包）
@@ -141,7 +144,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\fetch-tesseract-windows.ps1
 
 1. 发版前更新 `extensions/french-reader-version.json` 中的 `version`
 2. 将改动 push 到 GitHub
-3. 打开仓库 **Actions** → **Release Windows Portable** → **Run workflow**
+3. 打开仓库 **Actions** → **Release Portable** → **Run workflow**
 4. 填写参数：
 
 | 输入项 | 说明 |
@@ -153,8 +156,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\fetch-tesseract-windows.ps1
 
 5. 完成后在 **Releases** 或 **Artifacts** 下载 zip
 
-工作流文件：`.github/workflows/release-windows-portable.yml`  
-**不会**在 push/PR 时自动运行，仅 `workflow_dispatch` 手动触发。
+工作流文件：`.github/workflows/release-portable.yml`  
+与 macOS 包在同一 workflow 中并行构建，最终合并到**同一个 GitHub Release** 的 Assets 里。
 
 公开仓库使用标准 `windows-latest` Runner 时，Actions 分钟数通常 **免费**（见 [GitHub Actions 计费](https://docs.github.com/en/billing/concepts/product-billing/github-actions)）。
 
@@ -197,7 +200,8 @@ Invoke-RestMethod http://127.0.0.1:5002/french-reader/version
 | `TAURI_SIGNING_PRIVATE_KEY` | 便携包使用 `desktop:build:dev`，无需 Stirling 更新签名私钥 |
 | Tesseract 未找到 | 安装 UB-Mannheim Tesseract，确认 `fra` 语言包 |
 | PyInstaller 失败 | 删除 `dist/build-venv-windows` 后重跑 `bundle-sidecar-windows.ps1` |
-| `app\` 为空 | 手动从 `stirling-upstream/frontend/editor/src-tauri/target/release/*.exe` 复制到 zip 的 `app\` |
+| `app\` 为空 | 重新运行 `build-portable-windows.ps1`；`app\` 须含 `stirling-pdf.exe`、`runtime\jre\`、`libs\*.jar` |
+| `app\` 只有 exe | 旧版打包脚本缺陷；`desktop:build:dev` 只生成 exe，须额外复制 `runtime` 与 `libs`（脚本已修复） |
 
 ---
 
@@ -206,7 +210,8 @@ Invoke-RestMethod http://127.0.0.1:5002/french-reader/version
 | 问题 | 处理 |
 |------|------|
 | 双击 bat 闪退 | 在 cmd 中运行 bat 查看错误；检查杀毒软件是否拦截 engine |
-| 有界面但 OCR 失败 | 确认 `tesseract\tessdata\fra.traineddata` 存在 |
+| **Backend failed to restart** | 检查 `app\runtime\jre\bin\java.exe` 与 `app\libs\stirling-pdf-*.jar` 是否存在；缺则需重新打包 |
+| 有界面但 OCR 失败 | 确认 `tesseract\tessdata\fra.traineddata` 存在；旧包缺 CORS 配置，须用新 zip（启动脚本含 `FRENCH_READER_CORS_ORIGINS`） |
 | AI 不可用 | Settings 中填写 API Key |
 | 朗读无声音 | 需要网络（edge-tts） |
 
@@ -232,7 +237,7 @@ Invoke-RestMethod http://127.0.0.1:5002/french-reader/version
 powershell -ExecutionPolicy Bypass -File .\scripts\build-portable-windows.ps1
 ```
 
-**GitHub Actions (manual only):** Actions → *Release Windows Portable* → Run workflow with tag `v0.5.0`.
+**GitHub Actions (manual only):** Actions → *Release Portable* → Run workflow with tag `v0.5.0` (Windows + macOS arm64 + macOS x64 in one release).
 
 **Version tracking:** edit `extensions/french-reader-version.json`; synced to engine `/french-reader/version`, `/health`, UI Settings footer, and `VERSION.txt` in the zip.
 
