@@ -62,21 +62,33 @@ foreach ($pattern in @("libtesseract*.dll", "libleptonica*.dll", "libtiff*.dll",
 
 $prevPath = $env:PATH
 $prevTess = $env:TESSDATA_PREFIX
-$env:PATH = "$(Join-Path $StagingDir 'tesseract');$prevPath"
-$env:TESSDATA_PREFIX = "$(Join-Path $StagingDir 'tesseract')\"
+$TessRoot = Join-Path $StagingDir "tesseract"
+$env:PATH = "$TessRoot;$prevPath"
 try {
     $tessVersion = & $TessExe --version 2>&1 | Out-String
     if ($LASTEXITCODE -ne 0 -or $tessVersion -match 'was not found|cannot proceed') {
         Fail "Bundled tesseract.exe failed to run:`n$tessVersion"
     }
-    $langs = & $TessExe --list-langs 2>&1 | Out-String
-    if ($langs -notmatch '(?m)^fra$') {
-        Fail "Bundled tesseract missing fra language (check TESSDATA_PREFIX and tessdata/)"
+    $langsOk = $false
+    $prefixes = @(
+        $(if ($TessRoot.EndsWith('\')) { $TessRoot } else { "$TessRoot\" }),
+        (Join-Path $TessRoot "tessdata"),
+        ""
+    )
+    foreach ($prefix in $prefixes) {
+        if ($prefix) { $env:TESSDATA_PREFIX = $prefix } else { Remove-Item Env:TESSDATA_PREFIX -ErrorAction SilentlyContinue }
+        $langLines = @(& $TessExe --list-langs 2>&1 | ForEach-Object { "$_".Trim().TrimEnd([char]13) } | Where-Object {
+            $_ -and $_ -notmatch '^List of available' -and $_ -notmatch '^tesseract v'
+        })
+        if ($langLines -contains 'fra') { $langsOk = $true; break }
+    }
+    if (-not $langsOk) {
+        Fail "Bundled tesseract missing fra language (check tessdata/fra.traineddata and TESSDATA_PREFIX)"
     }
     Write-Log "Tesseract OK: $($tessVersion.Trim().Split([Environment]::NewLine)[0]); fra present"
 } finally {
     $env:PATH = $prevPath
-    $env:TESSDATA_PREFIX = $prevTess
+    if ($null -ne $prevTess) { $env:TESSDATA_PREFIX = $prevTess } else { Remove-Item Env:TESSDATA_PREFIX -ErrorAction SilentlyContinue }
 }
 
 if (-not $SkipDesktop) {
