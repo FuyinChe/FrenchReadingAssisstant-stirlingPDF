@@ -109,7 +109,7 @@ jobs:
             throw "tesseract.exe not found. Checked: $($candidates -join ', ')"
           }
           $tessExe = Join-Path $tess "tesseract.exe"
-          "TESSDATA_PREFIX=$tess\tessdata" >> $env:GITHUB_ENV
+          "TESSDATA_PREFIX=$tess" >> $env:GITHUB_ENV
           "TESSERACT_HOME=$tess" >> $env:GITHUB_ENV
           $tess >> $env:GITHUB_PATH
           Write-Host "Using Tesseract at $tess"

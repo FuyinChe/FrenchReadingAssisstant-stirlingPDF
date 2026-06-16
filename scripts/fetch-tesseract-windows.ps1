@@ -20,6 +20,48 @@ function Write-Log([string]$Message) {
     Write-Host "[fetch-tesseract-windows] $Message"
 }
 
+function Get-TesseractLangLines([string]$Exe) {
+    $raw = & $Exe --list-langs 2>&1 | ForEach-Object { "$_" }
+    return @($raw | ForEach-Object { $_.Trim().TrimEnd([char]13) } | Where-Object {
+            $_ -and
+            $_ -notmatch '^List of available' -and
+            $_ -notmatch '^tesseract v'
+        })
+}
+
+function Test-StagedTesseractLangs([string]$Exe, [string]$TessRoot) {
+    $prevPath = $env:PATH
+    $prevTess = $env:TESSDATA_PREFIX
+    try {
+        $env:PATH = "$TessRoot;$prevPath"
+        $prefixes = @(
+            $(if ($TessRoot.EndsWith('\')) { $TessRoot } else { "$TessRoot\" }),
+            (Join-Path $TessRoot "tessdata"),
+            ""
+        )
+        foreach ($prefix in $prefixes) {
+            if ($prefix) {
+                $env:TESSDATA_PREFIX = $prefix
+            } else {
+                Remove-Item Env:TESSDATA_PREFIX -ErrorAction SilentlyContinue
+            }
+            $langs = Get-TesseractLangLines $Exe
+            if ($langs -contains 'fra') {
+                Write-Log "Verified fra language pack (TESSDATA_PREFIX=$(if ($prefix) { $prefix } else { '<exe-relative>' }))"
+                return $true
+            }
+        }
+        return $false
+    } finally {
+        $env:PATH = $prevPath
+        if ($null -ne $prevTess) {
+            $env:TESSDATA_PREFIX = $prevTess
+        } else {
+            Remove-Item Env:TESSDATA_PREFIX -ErrorAction SilentlyContinue
+        }
+    }
+}
+
 function Ensure-FrenchTessdata([string]$TessDataDir) {
     $fra = Join-Path $TessDataDir "fra.traineddata"
     if (Test-Path $fra) { return }
@@ -85,23 +127,18 @@ function Copy-TesseractTree([string]$Source) {
 
     $stagedExe = Join-Path $OutputDir "tesseract.exe"
     $prevPath = $env:PATH
-    $prevTess = $env:TESSDATA_PREFIX
     $env:PATH = "$OutputDir;$prevPath"
-    $env:TESSDATA_PREFIX = "$OutputDir\"
     try {
         $version = & $stagedExe --version 2>&1 | Out-String
         if ($LASTEXITCODE -ne 0 -or $version -match 'was not found|cannot proceed') {
             throw "Staged tesseract.exe failed to run:`n$version"
         }
         Write-Log "Verified staged binary: $($version.Trim().Split([Environment]::NewLine)[0])"
-        $langs = & $stagedExe --list-langs 2>&1 | Out-String
-        if ($langs -notmatch '(?m)^fra$') {
-            throw "Staged tesseract missing fra in --list-langs"
+        if (-not (Test-StagedTesseractLangs $stagedExe $OutputDir)) {
+            throw "Staged tesseract missing fra in --list-langs (file exists: tessdata/fra.traineddata)"
         }
-        Write-Log "Verified fra language pack"
     } finally {
         $env:PATH = $prevPath
-        $env:TESSDATA_PREFIX = $prevTess
     }
 }
 
