@@ -1,10 +1,11 @@
 // Portable desktop Gradle overrides for CI stability.
 //
 // Core-only portable builds (DISABLE_ADDITIONAL_FEATURES=true) do not bundle
-// :proprietary. java-security-toolkit pulls com.coveo:saml-client transitively,
-// which imports OpenSAML BOM metadata from flaky build.shibboleth.net on CI.
-// Strip that unused SAML edge from the toolkit only — do not globally exclude
-// SAML/BouncyCastle or :proprietary will fail if Gradle still compiles it.
+// :proprietary or SAML runtime paths. java-security-toolkit pulls
+// com.coveo:saml-client transitively, which can drag resolution through flaky
+// build.shibboleth.net on GitHub Actions (especially Windows runners).
+
+import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 
 gradle.projectsLoaded {
     if (!gradle.ext.disableAdditional) {
@@ -17,6 +18,24 @@ gradle.projectsLoaded {
             task.enabled = false
         }
         logger.lifecycle('[portable-gradle] disabled :proprietary tasks (core-only build)')
+    }
+
+    // Stirling lists build.shibboleth.net before mavenCentral(). On Windows CI that
+    // host often times out while resolving ordinary Central artifacts (Jackson, etc.).
+    // Core-only portable builds do not need Shibboleth once SAML edges are stripped.
+    rootProject.allprojects { project ->
+        project.afterEvaluate {
+            def shibbolethRepos = []
+            project.repositories.withType(MavenArtifactRepository).each { repo ->
+                if (repo.url.toString().contains('build.shibboleth.net')) {
+                    shibbolethRepos << repo
+                }
+            }
+            if (!shibbolethRepos.isEmpty()) {
+                shibbolethRepos.each { project.repositories.remove(it) }
+                logger.lifecycle("[portable-gradle] removed Shibboleth repo from ${project.path}")
+            }
+        }
     }
 }
 
