@@ -14,6 +14,7 @@ import type {
 } from "@app/hooks/tools/frenchReader/types";
 import type { UserLlmSettings } from "@app/services/frenchReaderLlmSettings";
 import { FALLBACK_LLM_PROVIDERS, providerRequiresEndpoint } from "@app/services/frenchReaderLlmSettings";
+import { frenchReaderFetch } from "@app/services/frenchReaderFetch";
 
 const API_BASE =
   import.meta.env.VITE_FRENCH_READER_API_URL ?? "/french-reader";
@@ -103,7 +104,7 @@ export async function ocrRegion(
   imageBase64: string,
   selection: FrenchReaderSelection,
 ): Promise<OcrResult> {
-  const response = await fetch(`${API_BASE}/ocr/region`, {
+  const response = await frenchReaderFetch(`${API_BASE}/ocr/region`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -127,7 +128,7 @@ export async function ocrRegion(
 }
 
 export async function fetchBubbleDetectorStatus(): Promise<BubbleDetectorStatusResponse> {
-  const response = await fetch(`${API_BASE}/ocr/bubbles/status`);
+  const response = await frenchReaderFetch(`${API_BASE}/ocr/bubbles/status`);
   if (!response.ok) {
     throw new Error(await readErrorDetail(response));
   }
@@ -141,7 +142,7 @@ export async function detectAutoBubbles(params: {
   preprocess?: boolean;
   preferYolo?: boolean;
 }): Promise<AutoBubblesResponse> {
-  const response = await fetch(`${API_BASE}/ocr/auto-bubbles`, {
+  const response = await frenchReaderFetch(`${API_BASE}/ocr/auto-bubbles`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -161,7 +162,7 @@ export async function detectAutoBubbles(params: {
 }
 
 export async function fetchParagraphDetectorStatus(): Promise<ParagraphDetectorStatusResponse> {
-  const response = await fetch(`${API_BASE}/ocr/paragraphs/status`);
+  const response = await frenchReaderFetch(`${API_BASE}/ocr/paragraphs/status`);
   if (!response.ok) {
     throw new Error(await readErrorDetail(response));
   }
@@ -174,7 +175,7 @@ export async function detectAutoParagraphs(params: {
   confidenceThreshold?: number;
   preprocess?: boolean;
 }): Promise<AutoParagraphsResponse> {
-  const response = await fetch(`${API_BASE}/ocr/auto-paragraphs`, {
+  const response = await frenchReaderFetch(`${API_BASE}/ocr/auto-paragraphs`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -193,7 +194,7 @@ export async function detectAutoParagraphs(params: {
 }
 
 export async function fetchTtsVoices(lang = "fr"): Promise<TtsVoicesResponse> {
-  const response = await fetch(`${API_BASE}/tts/voices?lang=${encodeURIComponent(lang)}`);
+  const response = await frenchReaderFetch(`${API_BASE}/tts/voices?lang=${encodeURIComponent(lang)}`);
   if (!response.ok) {
     throw new Error(await readErrorDetail(response));
   }
@@ -205,7 +206,7 @@ export async function synthesizeTts(params: {
   voice: string;
   rate?: TtsRate;
 }): Promise<Blob> {
-  const response = await fetch(`${API_BASE}/tts/synthesize`, {
+  const response = await frenchReaderFetch(`${API_BASE}/tts/synthesize`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -234,7 +235,7 @@ export async function fetchAiStatus(
     if (llmSettings.customModel) params.set("model", llmSettings.customModel);
   }
   const query = params.toString();
-  const response = await fetch(`${API_BASE}/ai/status${query ? `?${query}` : ""}`);
+  const response = await frenchReaderFetch(`${API_BASE}/ai/status${query ? `?${query}` : ""}`);
   if (!response.ok) {
     throw new Error(await readErrorDetail(response));
   }
@@ -242,7 +243,7 @@ export async function fetchAiStatus(
 }
 
 export async function fetchLlmProviders(): Promise<LlmProvidersResponse> {
-  const response = await fetch(`${API_BASE}/ai/providers`);
+  const response = await frenchReaderFetch(`${API_BASE}/ai/providers`);
   if (!response.ok) {
     return {
       default_provider: "kimi",
@@ -264,7 +265,7 @@ export async function streamAiExplain(
 ): Promise<void> {
   const llmSettings = params.llmSettings;
   const userApiKey = llmSettings?.apiKey?.trim();
-  const response = await fetch(`${API_BASE}/ai/explain`, {
+  const response = await frenchReaderFetch(`${API_BASE}/ai/explain`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -339,7 +340,7 @@ export async function exportHistoryPdf(params: {
     throw new Error("No history entries with recognized text to export");
   }
 
-  const response = await fetch(`${API_BASE}/export/pdf`, {
+  const response = await frenchReaderFetch(`${API_BASE}/export/pdf`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

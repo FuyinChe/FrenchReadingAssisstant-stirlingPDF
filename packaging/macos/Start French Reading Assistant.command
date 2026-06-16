@@ -19,6 +19,19 @@ resolve_engine() {
   fi
 }
 
+sign_tesseract() {
+  if ! command -v codesign >/dev/null 2>&1; then
+    return 0
+  fi
+  if [[ ! -d "${ROOT}/tesseract" ]]; then
+    return 0
+  fi
+  chmod -R u+w "${ROOT}/tesseract" 2>/dev/null || true
+  while IFS= read -r -d '' file; do
+    codesign -s - --force --timestamp=none "${file}" 2>/dev/null || true
+  done < <(find "${ROOT}/tesseract" \( -type f \( -perm -111 -o -name '*.dylib' \) \) -print0 2>/dev/null)
+}
+
 sign_engine() {
   local script="${ROOT}/sign-engine-bundle.sh"
   if [[ -x "${script}" ]]; then
@@ -71,6 +84,7 @@ ENGINE="$(resolve_engine)" || {
   exit 1
 }
 
+sign_tesseract
 sign_engine "${ENGINE}"
 
 LOG_DIR="${ROOT}/logs"
