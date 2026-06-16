@@ -25,7 +25,9 @@ French-Reading-Assistant-0.5.0-macos-arm64/
 ├── app/
 │   └── Stirling PDF.app
 ├── engine/
-│   └── french-reader-engine
+│   └── french-reader-engine/          ← PyInstaller onedir bundle
+│       ├── french-reader-engine       ← executable
+│       └── _internal/                 ← Python + OpenCV deps
 └── tesseract/
     ├── bin/tesseract
     ├── lib/*.dylib              ← leptonica、tiff、jpeg 等依赖（必需）
@@ -111,6 +113,8 @@ chmod +x "Start French Reading Assistant.command"
 
 | 问题 | 处理 |
 |------|------|
+| 卡在 `Starting French Reading Assistant...` | **正常现象**：PyInstaller 引擎首次启动需 **20–60 秒**（加载 OpenCV）。请耐心等待，或单独运行 `./engine/french-reader-engine` 查看日志；`lsof -i :5002` 有输出即已就绪 |
+| `Killed: 9` / 引擎秒退 | `codesign -s - --force --deep engine/french-reader-engine` 后重试；仍失败则 `xattr -cr .` 并将文件夹移出 Downloads |
 | OCR 失败 / Load failed | 旧包未设置 CORS；新包启动脚本会注入 `FRENCH_READER_CORS_ORIGINS`（含 `tauri.localhost`）。须用新 zip 重打 |
 | `Library not loaded` / dyld 报错 | 旧包只复制了 `bin/tesseract`，缺 `lib/*.dylib`；新打包脚本会捆绑全部 Homebrew 依赖 |
 | 钥匙串反复要密码 | 见 README；启动脚本已设置 `STIRLING_PDF_TEST_FORCE_*_KEYRING_FAIL` |

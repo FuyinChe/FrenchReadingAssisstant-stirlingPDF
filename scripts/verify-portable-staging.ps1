@@ -106,7 +106,7 @@ if (-not $SkipDesktop) {
 if ($SmokeTestEngine) {
     $prevCors = $env:FRENCH_READER_CORS_ORIGINS
     $env:PATH = "$(Join-Path $StagingDir 'tesseract');$prevPath"
-    $env:TESSDATA_PREFIX = "$(Join-Path $StagingDir 'tesseract')\"
+    $env:TESSDATA_PREFIX = Join-Path $StagingDir "tesseract/tessdata"
     $env:FRENCH_READER_CORS_ORIGINS = "http://localhost:5173,https://tauri.localhost"
     $proc = $null
     try {
@@ -124,6 +124,23 @@ if ($SmokeTestEngine) {
         if (-not $status.ocr_ready) { Fail "Engine ocr_ready=false — tesseract/pytesseract not usable" }
         if (-not $status.bubble_ready) { Fail "Engine bubble_ready=false — OpenCV (cv2) not bundled in PyInstaller exe" }
         Write-Log "Engine smoke test OK: ocr_ready=$($status.ocr_ready), bubble_ready=$($status.bubble_ready)"
+
+        $ocrBody = @{
+            image_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+            page         = 1
+            bbox         = @{ x = 0.1; y = 0.1; w = 0.5; h = 0.2 }
+            lang         = "fr"
+        } | ConvertTo-Json -Depth 4 -Compress
+        try {
+            $ocr = Invoke-WebRequest -Uri "http://127.0.0.1:5002/french-reader/ocr/region" -Method POST `
+                -Body $ocrBody -ContentType "application/json" -TimeoutSec 30 -UseBasicParsing
+            if ($ocr.StatusCode -ge 500) {
+                Fail "OCR roundtrip failed (HTTP $($ocr.StatusCode)) — check TESSDATA_PREFIX points to tesseract\tessdata"
+            }
+            Write-Log "OCR roundtrip OK (HTTP $($ocr.StatusCode))"
+        } catch {
+            Fail "OCR roundtrip failed — likely TESSDATA_PREFIX/tessdata path: $($_.Exception.Message)"
+        }
 
         $corsHeaders = @{
             Origin = 'https://tauri.localhost'

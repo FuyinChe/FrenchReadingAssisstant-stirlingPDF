@@ -220,7 +220,7 @@ Invoke-RestMethod http://127.0.0.1:5002/french-reader/version
 |------|------|
 | 双击 bat 闪退 | 在 cmd 中运行 bat 查看错误；检查杀毒软件是否拦截 engine |
 | **Backend failed to restart** | 检查 `app\runtime\jre\bin\java.exe` 与 `app\libs\stirling-pdf-*.jar` 是否存在；缺则需重新打包 |
-| 有界面但 OCR 失败 | 确认 `tesseract\tessdata\fra.traineddata` 存在；旧包缺 CORS 配置，须用新 zip（启动脚本含 `FRENCH_READER_CORS_ORIGINS`） |
+| 有界面但 OCR 失败 / 503 | 确认 `tesseract\tessdata\fra.traineddata` 存在；**0.5.0 旧包** 将 `TESSDATA_PREFIX` 错设为 `tesseract\`，应改为 `tesseract\tessdata`（见 `Start French Reading Assistant.bat` 第 7 行） |
 | `libtiff-6.dll` / `libjpeg-8.dll` 等缺失 | 旧打包脚本未复制全部 Tesseract DLL；新脚本会复制安装目录下所有 `*.dll` 并自检 |
 | OCR is not configured | 引擎找不到 `tesseract.exe` 或依赖 DLL；确认 `tesseract\` 完整，并用 bat 启动（会设置 PATH） |
 | AI 不可用 | Settings 中填写 API Key |

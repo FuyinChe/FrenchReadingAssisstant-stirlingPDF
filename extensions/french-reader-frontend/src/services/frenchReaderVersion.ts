@@ -7,13 +7,13 @@ export const FRENCH_READER_PLUGIN_INFO = {
   "minStirlingVersion": "2.0.0",
   "channel": "portable",
   "build": {
-    "platform": "dev",
-    "id": "0.5.0-20260615-134740",
-    "builtAt": "2026-06-15T13:47:40+00:00"
+    "platform": "macos-arm64",
+    "id": "0.5.0-20260616-133852",
+    "builtAt": "2026-06-16T13:38:52+00:00"
   }
 } as const;
 
 export const FRENCH_READER_PLUGIN_VERSION = "0.5.0" as const;
 export const FRENCH_READER_PLUGIN_NAME = "french-reading-assistant" as const;
-export const FRENCH_READER_BUILD_ID = "0.5.0-20260615-134740" as const;
-export const FRENCH_READER_BUILD_PLATFORM = "dev" as const;
+export const FRENCH_READER_BUILD_ID = "0.5.0-20260616-133852" as const;
+export const FRENCH_READER_BUILD_PLATFORM = "macos-arm64" as const;

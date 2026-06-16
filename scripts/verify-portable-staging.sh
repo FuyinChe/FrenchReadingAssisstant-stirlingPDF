@@ -23,7 +23,14 @@ fail() { log "ERROR: $*"; exit 1; }
 log "Verifying ${STAGING_DIR}"
 
 LAUNCHER="${STAGING_DIR}/Start French Reading Assistant.command"
-ENGINE="${STAGING_DIR}/engine/french-reader-engine"
+ENGINE_DIR="${STAGING_DIR}/engine/french-reader-engine"
+if [[ -x "${ENGINE_DIR}/french-reader-engine" ]]; then
+  ENGINE="${ENGINE_DIR}/french-reader-engine"
+elif [[ -x "${ENGINE_DIR}" ]]; then
+  ENGINE="${ENGINE_DIR}"
+else
+  fail "Missing engine binary under engine/french-reader-engine"
+fi
 TESS_BIN="${STAGING_DIR}/tesseract/bin/tesseract"
 TESS_LIB="${STAGING_DIR}/tesseract/lib"
 FRA_DATA="${STAGING_DIR}/tesseract/share/tessdata/fra.traineddata"
@@ -100,6 +107,15 @@ if not s.get('bubble_ready'):
 print('ocr_ready=%s bubble_ready=%s' % (s.get('ocr_ready'), s.get('bubble_ready')))
 " || fail "Engine smoke test failed"
   log "Engine smoke test OK"
+
+  ocr_status="$(curl -fsS -o /dev/null -w '%{http_code}' -X POST \
+    -H 'Content-Type: application/json' \
+    -d '{"image_base64":"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==","page":1,"bbox":{"x":0.1,"y":0.1,"w":0.5,"h":0.2},"lang":"fr"}' \
+    "http://127.0.0.1:5002/french-reader/ocr/region" 2>/dev/null)" || ocr_status=""
+  if [[ -z "${ocr_status}" || "${ocr_status}" -ge 500 ]]; then
+    fail "OCR roundtrip failed (HTTP ${ocr_status:-none}) — check TESSDATA_PREFIX=tesseract/share/tessdata"
+  fi
+  log "OCR roundtrip OK (HTTP ${ocr_status})"
 
   if ! curl -fsS -o /dev/null -X OPTIONS \
     -H 'Origin: https://tauri.localhost' \
