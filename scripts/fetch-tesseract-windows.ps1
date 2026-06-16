@@ -20,25 +20,88 @@ function Write-Log([string]$Message) {
     Write-Host "[fetch-tesseract-windows] $Message"
 }
 
+function Ensure-FrenchTessdata([string]$TessDataDir) {
+    $fra = Join-Path $TessDataDir "fra.traineddata"
+    if (Test-Path $fra) { return }
+    New-Item -ItemType Directory -Force -Path $TessDataDir | Out-Null
+    $url = "https://github.com/tesseract-ocr/tessdata_fast/raw/main/fra.traineddata"
+    Write-Log "Downloading fra.traineddata (not in build machine tessdata)..."
+    Invoke-WebRequest -Uri $url -OutFile $fra -UseBasicParsing
+    if (-not (Test-Path $fra)) {
+        throw "Failed to download French tessdata to $fra"
+    }
+}
+
 function Copy-TesseractTree([string]$Source) {
+    $exe = Join-Path $Source "tesseract.exe"
+    if (-not (Test-Path $exe)) {
+        throw "tesseract.exe not found under $Source"
+    }
+
     New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
-    $items = @(
-        "tesseract.exe",
-        "libtesseract-5.dll",
-        "libgcc_s_seh-1.dll",
-        "libstdc++-6.dll",
-        "libwinpthread-1.dll",
-        "libleptonica-6.dll"
+    Copy-Item -Force $exe (Join-Path $OutputDir "tesseract.exe")
+
+    $dlls = Get-ChildItem -Path $Source -Filter "*.dll" -File -ErrorAction SilentlyContinue
+    if (-not $dlls) {
+        throw "No Tesseract DLLs found beside $exe"
+    }
+    foreach ($dll in $dlls) {
+        Copy-Item -Force $dll.FullName $OutputDir
+    }
+    Write-Log "Copied tesseract.exe and $($dlls.Count) DLL(s)"
+
+    $tessSrc = Join-Path $Source "tessdata"
+    if (-not (Test-Path $tessSrc)) {
+        $alt = Join-Path (Split-Path $Source -Parent) "tessdata"
+        if (Test-Path $alt) { $tessSrc = $alt }
+    }
+    if (Test-Path $tessSrc) {
+        $tessDest = Join-Path $OutputDir "tessdata"
+        if (Test-Path $tessDest) { Remove-Item -Recurse -Force $tessDest }
+        Copy-Item -Recurse -Force $tessSrc $tessDest
+    } else {
+        throw "tessdata folder missing under $Source"
+    }
+
+    Ensure-FrenchTessdata (Join-Path $OutputDir "tessdata")
+
+    $requiredDllPatterns = @(
+        "libtesseract*.dll",
+        "libleptonica*.dll",
+        "libtiff*.dll",
+        "libjpeg*.dll",
+        "libgif*.dll",
+        "libopenjp2*.dll"
     )
-    foreach ($item in $items) {
-        $src = Join-Path $Source $item
-        if (Test-Path $src) {
-            Copy-Item -Force $src $OutputDir
+    foreach ($pattern in $requiredDllPatterns) {
+        if (-not (Get-ChildItem -Path $OutputDir -Filter $pattern -File -ErrorAction SilentlyContinue)) {
+            throw "Bundled Tesseract is incomplete: missing $pattern in $OutputDir"
         }
     }
-    $tessSrc = Join-Path $Source "tessdata"
-    if (Test-Path $tessSrc) {
-        Copy-Item -Recurse -Force $tessSrc (Join-Path $OutputDir "tessdata")
+
+    if (-not (Test-Path (Join-Path $OutputDir "tessdata/fra.traineddata"))) {
+        throw "French tessdata missing after staging"
+    }
+
+    $stagedExe = Join-Path $OutputDir "tesseract.exe"
+    $prevPath = $env:PATH
+    $prevTess = $env:TESSDATA_PREFIX
+    $env:PATH = "$OutputDir;$prevPath"
+    $env:TESSDATA_PREFIX = "$OutputDir\"
+    try {
+        $version = & $stagedExe --version 2>&1 | Out-String
+        if ($LASTEXITCODE -ne 0 -or $version -match 'was not found|cannot proceed') {
+            throw "Staged tesseract.exe failed to run:`n$version"
+        }
+        Write-Log "Verified staged binary: $($version.Trim().Split([Environment]::NewLine)[0])"
+        $langs = & $stagedExe --list-langs 2>&1 | Out-String
+        if ($langs -notmatch '(?m)^fra$') {
+            throw "Staged tesseract missing fra in --list-langs"
+        }
+        Write-Log "Verified fra language pack"
+    } finally {
+        $env:PATH = $prevPath
+        $env:TESSDATA_PREFIX = $prevTess
     }
 }
 

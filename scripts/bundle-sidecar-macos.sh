@@ -34,6 +34,9 @@ pip install --upgrade pip wheel >/dev/null
 pip install pyinstaller >/dev/null
 pip install -e "${ENGINE_DIR}[bubble]" >/dev/null
 
+log "Verifying OpenCV (cv2) before PyInstaller..."
+python -c "import cv2; print('opencv', cv2.__version__)"
+
 log "Running PyInstaller..."
 pyinstaller "${SPEC}" --noconfirm --clean --workpath "${BUILD_WORK}" --distpath "${BUILD_DIST}"
 

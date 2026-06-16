@@ -3,7 +3,7 @@
 
 import pathlib
 
-from PyInstaller.utils.hooks import collect_submodules
+from PyInstaller.utils.hooks import collect_dynamic_libs, collect_submodules
 
 
 def _repo_root() -> pathlib.Path:
@@ -22,6 +22,7 @@ version_json = engine_src / "french_reader" / "_plugin_version.json"
 
 hiddenimports = collect_submodules("uvicorn")
 hiddenimports += collect_submodules("fastapi")
+hiddenimports += collect_submodules("cv2")
 hiddenimports += [
     "french_reader.main",
     "french_reader.router",
@@ -40,10 +41,12 @@ hiddenimports += [
     "reportlab",
 ]
 
+cv2_binaries = collect_dynamic_libs("cv2")
+
 a = Analysis(
     [str(root / "packaging" / "windows" / "engine-main.py")],
     pathex=[str(engine_src)],
-    binaries=[],
+    binaries=cv2_binaries,
     datas=[(str(version_json), "french_reader")],
     hiddenimports=hiddenimports,
     hookspath=[],

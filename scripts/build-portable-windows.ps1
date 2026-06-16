@@ -170,6 +170,10 @@ Stirling PDF: https://github.com/Stirling-Tools/Stirling-PDF
 "@
 Set-Content -Path (Join-Path $StagingDir "VERSION.txt") -Value $VersionText -Encoding UTF8
 
+$VerifyArgs = @{ StagingDir = $StagingDir }
+if ($SkipDesktop) { $VerifyArgs.SkipDesktop = $true }
+& (Join-Path $Root "scripts/verify-portable-staging.ps1") @VerifyArgs
+
 if (-not $SkipZip) {
     $ZipPath = Join-Path $OutputRoot "$StagingName.zip"
     if (Test-Path $ZipPath) { Remove-Item -Force $ZipPath }
