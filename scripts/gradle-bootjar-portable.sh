@@ -39,27 +39,48 @@ fi
 # fails while resolving ordinary Central artifacts such as Spring Boot or Guava.
 # Keep Shibboleth available for artifacts that need it, but let Central satisfy
 # normal dependencies first.
+#
+# The portable desktop build is core-only (DISABLE_ADDITIONAL_FEATURES=true), so
+# it does not use proprietary SAML support. However java-security-toolkit brings
+# com.coveo:saml-client transitively, which imports OpenSAML BOM metadata from
+# Shibboleth and can still fail the core compile classpath. Exclude that unused
+# SAML client for portable bootJar builds.
 "${PYTHON}" - "${BUILD_GRADLE}" <<'PY'
 from pathlib import Path
 import sys
 
 path = Path(sys.argv[1])
 text = path.read_text(encoding="utf-8")
-old = '''        maven { url = "https://build.shibboleth.net/maven/releases" }
+repo_old = '''        maven { url = "https://build.shibboleth.net/maven/releases" }
         maven { url = "https://repository.jboss.org/" }
         mavenCentral()
 '''
-new = '''        mavenCentral()
+repo_new = '''        mavenCentral()
         maven { url = "https://build.shibboleth.net/maven/releases" }
         maven { url = "https://repository.jboss.org/" }
 '''
-if old in text:
-    path.write_text(text.replace(old, new), encoding="utf-8")
+if repo_old in text:
+    text = text.replace(repo_old, repo_new)
     print("[gradle-bootjar-portable] patched repository order: mavenCentral first")
-elif new in text:
+elif repo_new in text:
     print("[gradle-bootjar-portable] repository order already patched")
 else:
     raise SystemExit("[gradle-bootjar-portable] expected repository block not found")
+
+dep_old = "        implementation 'io.github.pixee:java-security-toolkit:1.2.3'\n"
+dep_new = """        implementation('io.github.pixee:java-security-toolkit:1.2.3') {
+            exclude group: 'com.coveo', module: 'saml-client'
+        }
+"""
+if dep_old in text:
+    text = text.replace(dep_old, dep_new)
+    print("[gradle-bootjar-portable] excluded unused com.coveo:saml-client from java-security-toolkit")
+elif dep_new in text:
+    print("[gradle-bootjar-portable] java-security-toolkit SAML exclusion already patched")
+else:
+    raise SystemExit("[gradle-bootjar-portable] expected java-security-toolkit dependency not found")
+
+path.write_text(text, encoding="utf-8")
 PY
 
 run_gradle() {

@@ -52,7 +52,7 @@ French-Reading-Assistant-0.5.0-macos-arm64/
 | 现象 | 处理 |
 |------|------|
 | `spotlessJava` / `build.shibboleth.net` | 勿用 `task desktop:prepare`；`build-stirling-desktop-portable.sh` 对 Gradle 加 `-x spotless*` |
-| `compileJava` / `build.shibboleth.net` | `gradle-bootjar-portable.sh` 会临时把 `mavenCentral()` 排到 Shibboleth 前面，避免普通依赖先访问不稳定仓库 |
+| `compileJava` / `build.shibboleth.net` | `gradle-bootjar-portable.sh` 会临时把 `mavenCentral()` 排到 Shibboleth 前面，并排除便携 core 不用的 `com.coveo:saml-client` 传递依赖 |
 | `failed to bundle project: No such file or directory` | 勿用 `task desktop:build`；脚本使用 `npx tauri build --target … --bundles app`，并 `unset CARGO_BUILD_TARGET` |
 | Intel (x64) 找不到 `.app` | 产物在 `target/x86_64-apple-darwin/release/bundle/macos/` |
 | Apple Silicon (arm64) 打包失败 | 与 x64 相同，必须显式 `--target aarch64-apple-darwin`（不要只靠 `CARGO_BUILD_TARGET`） |
