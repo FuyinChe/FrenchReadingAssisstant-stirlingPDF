@@ -1,24 +1,26 @@
 // Portable desktop Gradle overrides for CI stability.
 //
-// Why:
-// - build.shibboleth.net is often unreachable on GitHub Actions.
-// - core-only portable builds do not need proprietary SAML deps.
-//
-// This init script avoids mutating upstream build.gradle and applies only to
-// portable bootJar invocations that pass `--init-script`.
+// Core-only portable builds (DISABLE_ADDITIONAL_FEATURES=true) do not bundle
+// :proprietary. java-security-toolkit pulls com.coveo:saml-client transitively,
+// which imports OpenSAML BOM metadata from flaky build.shibboleth.net on CI.
+// Strip that unused SAML edge from the toolkit only — do not globally exclude
+// SAML/BouncyCastle or :proprietary will fail if Gradle still compiles it.
+
+gradle.projectsLoaded {
+    if (!gradle.ext.disableAdditional) {
+        return
+    }
+
+    def proprietary = rootProject.findProject(':proprietary')
+    if (proprietary != null) {
+        proprietary.tasks.configureEach { task ->
+            task.enabled = false
+        }
+        logger.lifecycle('[portable-gradle] disabled :proprietary tasks (core-only build)')
+    }
+}
 
 allprojects {
-    repositories {
-        // Prefer Central first for common artifacts.
-        mavenCentral()
-    }
-
-    configurations.configureEach {
-        // Portable desktop build never uses proprietary SAML runtime paths.
-        exclude group: 'com.coveo', module: 'saml-client'
-        exclude group: 'org.opensaml'
-    }
-
     dependencies {
         components {
             withModule('io.github.pixee:java-security-toolkit') {
