@@ -4,6 +4,7 @@ cd "$(dirname "$0")" || exit 1
 ROOT="$PWD"
 
 export PATH="${ROOT}/tesseract/bin:${PATH}"
+export DYLD_LIBRARY_PATH="${ROOT}/tesseract/lib${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}"
 export TESSDATA_PREFIX="${ROOT}/tesseract/share/tessdata"
 export FRENCH_READER_ENABLED=true
 export VITE_FRENCH_READER_ENABLED=true

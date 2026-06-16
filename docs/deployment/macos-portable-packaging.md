@@ -25,6 +25,7 @@ French-Reading-Assistant-0.5.0-macos-arm64/
 │   └── french-reader-engine
 └── tesseract/
     ├── bin/tesseract
+    ├── lib/*.dylib              ← leptonica、tiff、jpeg 等依赖（必需）
     └── share/tessdata/
 ```
 
@@ -68,6 +69,8 @@ French-Reading-Assistant-0.5.0-macos-arm64/
 
 产物：`dist/portable-macos/*.zip`
 
+打包结束时会自动运行 `scripts/verify-portable-staging.sh`。详见 [portable-dependency-checklist.md](portable-dependency-checklist.md)。
+
 ---
 
 ## 用户使用
@@ -104,6 +107,7 @@ chmod +x "Start French Reading Assistant.command"
 | 问题 | 处理 |
 |------|------|
 | OCR 失败 / Load failed | 旧包未设置 CORS；新包启动脚本会注入 `FRENCH_READER_CORS_ORIGINS`（含 `tauri.localhost`）。须用新 zip 重打 |
+| `Library not loaded` / dyld 报错 | 旧包只复制了 `bin/tesseract`，缺 `lib/*.dylib`；新打包脚本会捆绑全部 Homebrew 依赖 |
 | 钥匙串反复要密码 | 见 README；启动脚本已设置 `STIRLING_PDF_TEST_FORCE_*_KEYRING_FAIL` |
 | Stirling 闪退 | `xattr -cr .`；确认 zip 含完整 `.app`（非仅 exe） |
 

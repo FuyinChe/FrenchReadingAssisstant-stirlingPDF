@@ -47,6 +47,10 @@ Write-Log "Installing build dependencies..."
 & $Py -m pip install pyinstaller
 & $Py -m pip install -e "${EngineDir}[bubble]"
 
+Write-Log "Verifying OpenCV (cv2) before PyInstaller..."
+& $Py -c "import cv2; print('opencv', cv2.__version__)"
+if ($LASTEXITCODE -ne 0) { throw "opencv-python-headless (cv2) not importable in build venv" }
+
 $BuildWork = Join-Path $Root "dist/pyinstaller-work"
 $BuildDist = Join-Path $Root "dist/pyinstaller-dist"
 New-Item -ItemType Directory -Force -Path $BuildWork, $BuildDist | Out-Null

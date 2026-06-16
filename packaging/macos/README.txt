@@ -30,7 +30,7 @@ START HERE / 从这里启动
 CONTENTS / 目录说明
   app/       Stirling PDF.app (with French Reader tool)
   engine/    French Reader OCR / TTS / AI (local :5002)
-  tesseract/ OCR binaries + tessdata (French when bundled)
+  tesseract/ OCR binaries + lib/*.dylib + tessdata (French when bundled)
 
 FIRST RUN / 首次使用
   1. 用上面任一方法启动 .command（会打开终端窗口并启动 engine + Stirling）

@@ -7,7 +7,7 @@ START HERE / 从这里启动
 WHAT THIS FOLDER CONTAINS / 目录说明
   app\       Stirling PDF desktop (exe + runtime\jre + libs\*.jar)
   engine\    French Reader OCR / TTS / AI service (local only)
-  tesseract\ OCR language data (French included when bundled)
+  tesseract\ OCR binaries + tessdata (tesseract.exe and all *.dll; French when bundled)
 
 FIRST RUN / 首次使用
   1. Windows may show SmartScreen — click "More info" → "Run anyway"
@@ -18,6 +18,10 @@ FIRST RUN / 首次使用
 NETWORK / 网络
   - PDF stays on your computer
   - Read aloud (TTS) and AI need internet
+
+OCR DLL errors (libtiff-6.dll, libjpeg-8.dll, …)?
+  - Use a newer zip build, or copy all *.dll from a full Tesseract install
+    into the tesseract\ folder next to tesseract.exe
 
 VERSION / 版本
   See VERSION.txt in this folder.

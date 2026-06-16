@@ -110,6 +110,13 @@ Path('${STAGING_DIR}/VERSION.txt').write_text(
 )
 "
 
+chmod +x "${ROOT}/scripts/verify-portable-staging.sh"
+VERIFY_ARGS=("${STAGING_DIR}")
+if [[ "${SKIP_DESKTOP}" == "true" ]]; then
+  VERIFY_ARGS+=(--skip-desktop)
+fi
+"${ROOT}/scripts/verify-portable-staging.sh" "${VERIFY_ARGS[@]}"
+
 if [[ "${SKIP_ZIP}" != "true" ]]; then
   ZIP_PATH="${OUTPUT_ROOT}/${STAGING_NAME}.zip"
   rm -f "${ZIP_PATH}"
