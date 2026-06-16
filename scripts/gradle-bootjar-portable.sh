@@ -68,26 +68,57 @@ else:
     raise SystemExit("[gradle-bootjar-portable] expected repository block not found")
 
 dep_old = "        implementation 'io.github.pixee:java-security-toolkit:1.2.3'\n"
+dep_prev = """        implementation('io.github.pixee:java-security-toolkit:1.2.3') {
+            exclude group: 'com.coveo', module: 'saml-client'
+        }
+"""
 dep_new = """        implementation('io.github.pixee:java-security-toolkit:1.2.3') {
             exclude group: 'com.coveo', module: 'saml-client'
+            exclude group: 'org.opensaml'
         }
 """
 if dep_old in text:
     text = text.replace(dep_old, dep_new)
     print("[gradle-bootjar-portable] excluded unused com.coveo:saml-client from java-security-toolkit")
+elif dep_prev in text:
+    text = text.replace(dep_prev, dep_new)
+    print("[gradle-bootjar-portable] updated java-security-toolkit exclusion to include org.opensaml")
 elif dep_new in text:
     print("[gradle-bootjar-portable] java-security-toolkit SAML exclusion already patched")
 else:
     raise SystemExit("[gradle-bootjar-portable] expected java-security-toolkit dependency not found")
+
+cfg_old = """        // Keep BouncyCastle modules aligned to avoid runtime linkage errors
+        resolutionStrategy.force "org.bouncycastle:bcprov-jdk18on:${bouncycastleVersion}"
+        resolutionStrategy.force "org.bouncycastle:bcpkix-jdk18on:${bouncycastleVersion}"
+        resolutionStrategy.force "org.bouncycastle:bcutil-jdk18on:${bouncycastleVersion}"
+"""
+cfg_new = """        // Keep BouncyCastle modules aligned to avoid runtime linkage errors
+        resolutionStrategy.force "org.bouncycastle:bcprov-jdk18on:${bouncycastleVersion}"
+        resolutionStrategy.force "org.bouncycastle:bcpkix-jdk18on:${bouncycastleVersion}"
+        resolutionStrategy.force "org.bouncycastle:bcutil-jdk18on:${bouncycastleVersion}"
+
+        // Portable desktop build is core-only; proactively drop SAML-related
+        // transitive deps that pull OpenSAML BOM metadata from Shibboleth.
+        exclude group: 'com.coveo', module: 'saml-client'
+        exclude group: 'org.opensaml'
+"""
+if cfg_old in text:
+    text = text.replace(cfg_old, cfg_new)
+    print("[gradle-bootjar-portable] added global excludes for com.coveo/org.opensaml")
+elif cfg_new in text:
+    print("[gradle-bootjar-portable] global excludes for com.coveo/org.opensaml already patched")
+else:
+    raise SystemExit("[gradle-bootjar-portable] expected resolutionStrategy block not found")
 
 path.write_text(text, encoding="utf-8")
 PY
 
 run_gradle() {
   if [[ -f "./gradlew.bat" ]] && { [[ "${OS:-}" == "Windows_NT" ]] || [[ "$(uname -s 2>/dev/null)" == MINGW* ]] || [[ "$(uname -s 2>/dev/null)" == MSYS* ]]; }; then
-    cmd //c gradlew.bat bootJar --no-daemon -PjpdfiumPlatforms="${JPDFIUM_PLATFORMS}" "${SPOTLESS_SKIP[@]}"
+    cmd //c gradlew.bat bootJar --no-daemon -PnoSpotless=true -PjpdfiumPlatforms="${JPDFIUM_PLATFORMS}" "${SPOTLESS_SKIP[@]}"
   else
-    ./gradlew bootJar --no-daemon -PjpdfiumPlatforms="${JPDFIUM_PLATFORMS}" "${SPOTLESS_SKIP[@]}"
+    ./gradlew bootJar --no-daemon -PnoSpotless=true -PjpdfiumPlatforms="${JPDFIUM_PLATFORMS}" "${SPOTLESS_SKIP[@]}"
   fi
 }
 
