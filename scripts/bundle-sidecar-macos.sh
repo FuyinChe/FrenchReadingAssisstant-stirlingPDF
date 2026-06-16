@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bundle french-reader-engine for macOS (PyInstaller one-file binary).
+# Bundle french-reader-engine for macOS (PyInstaller onedir + ad-hoc codesign).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -40,10 +40,18 @@ python -c "import cv2; print('opencv', cv2.__version__)"
 log "Running PyInstaller..."
 pyinstaller "${SPEC}" --noconfirm --clean --workpath "${BUILD_WORK}" --distpath "${BUILD_DIST}"
 
-BUILT="${BUILD_DIST}/french-reader-engine"
-[[ -f "${BUILT}" ]] || { echo "PyInstaller output missing: ${BUILT}" >&2; exit 1; }
+BUILT_DIR="${BUILD_DIST}/french-reader-engine"
+BUILT_BIN="${BUILT_DIR}/french-reader-engine"
+[[ -x "${BUILT_BIN}" ]] || { echo "PyInstaller output missing: ${BUILT_BIN}" >&2; exit 1; }
 
 mkdir -p "${OUTPUT_DIR}"
-cp -f "${BUILT}" "${OUTPUT_DIR}/french-reader-engine"
-chmod +x "${OUTPUT_DIR}/french-reader-engine"
-log "Engine binary: ${OUTPUT_DIR}/french-reader-engine"
+rm -rf "${OUTPUT_DIR}/french-reader-engine"
+cp -R "${BUILT_DIR}" "${OUTPUT_DIR}/french-reader-engine"
+chmod +x "${OUTPUT_DIR}/french-reader-engine/french-reader-engine"
+
+if command -v codesign >/dev/null 2>&1; then
+  log "Ad-hoc codesigning engine bundle..."
+  codesign -s - --force --deep "${OUTPUT_DIR}/french-reader-engine/french-reader-engine"
+fi
+
+log "Engine bundle: ${OUTPUT_DIR}/french-reader-engine/french-reader-engine"

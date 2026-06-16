@@ -23,7 +23,14 @@ fail() { log "ERROR: $*"; exit 1; }
 log "Verifying ${STAGING_DIR}"
 
 LAUNCHER="${STAGING_DIR}/Start French Reading Assistant.command"
-ENGINE="${STAGING_DIR}/engine/french-reader-engine"
+ENGINE_DIR="${STAGING_DIR}/engine/french-reader-engine"
+if [[ -x "${ENGINE_DIR}/french-reader-engine" ]]; then
+  ENGINE="${ENGINE_DIR}/french-reader-engine"
+elif [[ -x "${ENGINE_DIR}" ]]; then
+  ENGINE="${ENGINE_DIR}"
+else
+  fail "Missing engine binary under engine/french-reader-engine"
+fi
 TESS_BIN="${STAGING_DIR}/tesseract/bin/tesseract"
 TESS_LIB="${STAGING_DIR}/tesseract/lib"
 FRA_DATA="${STAGING_DIR}/tesseract/share/tessdata/fra.traineddata"

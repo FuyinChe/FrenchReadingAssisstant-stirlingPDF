@@ -5,7 +5,30 @@ cd "$(dirname "$0")" || exit 1
 ROOT="$PWD"
 
 chmod -R u+w "${ROOT}" 2>/dev/null || true
-xattr -dr com.apple.quarantine "${ROOT}" 2>/dev/null || true
+xattr -cr "${ROOT}" 2>/dev/null || true
+
+resolve_engine() {
+  local onedir="${ROOT}/engine/french-reader-engine/french-reader-engine"
+  local onefile="${ROOT}/engine/french-reader-engine"
+  if [[ -x "${onedir}" ]]; then
+    printf '%s\n' "${onedir}"
+  elif [[ -f "${onefile}" && -x "${onefile}" ]]; then
+    printf '%s\n' "${onefile}"
+  else
+    return 1
+  fi
+}
+
+sign_engine() {
+  local engine="$1"
+  if ! command -v codesign >/dev/null 2>&1; then
+    return 0
+  fi
+  codesign -s - --force --deep "${engine}" 2>/dev/null || true
+  if [[ -d "${ROOT}/engine/french-reader-engine/_internal" ]]; then
+    codesign -s - --force --deep "${ROOT}/engine/french-reader-engine" 2>/dev/null || true
+  fi
+}
 
 if xattr -l "${ROOT}/engine/french-reader-engine" 2>/dev/null | grep -q 'com.apple.quarantine'; then
   echo "[ERROR] Folder is still quarantined (common for Downloads)."
@@ -37,16 +60,23 @@ if [[ -f "${ROOT}/VERSION.txt" ]]; then
   echo
 fi
 
-echo "Starting French Reading Assistant..."
-
-ENGINE="${ROOT}/engine/french-reader-engine"
-if [[ ! -x "${ENGINE}" ]]; then
+ENGINE="$(resolve_engine)" || {
   echo "[ERROR] Missing engine/french-reader-engine"
   read -r -p "Press Enter to close..."
   exit 1
-fi
+}
 
-"${ENGINE}" &
+sign_engine "${ENGINE}"
+
+LOG_DIR="${ROOT}/logs"
+mkdir -p "${LOG_DIR}"
+ENGINE_LOG="${LOG_DIR}/engine.log"
+
+echo "Starting French Reading Assistant..."
+echo "(Engine startup can take 20–60s on first launch — please wait.)"
+
+: > "${ENGINE_LOG}"
+"${ENGINE}" >>"${ENGINE_LOG}" 2>&1 &
 ENGINE_PID=$!
 STIRLING_PID=""
 cleanup() {
@@ -57,18 +87,31 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-# Wait without curl/python (quarantine can SIGKILL those in a tight loop → "Killed: 9" spam).
 READY=0
-for _ in $(seq 1 45); do
+for i in $(seq 1 90); do
   if ! kill -0 "${ENGINE_PID}" 2>/dev/null; then
+    wait "${ENGINE_PID}" 2>/dev/null || true
     echo "[ERROR] French Reader engine exited while starting."
-    echo "Run in Terminal: cd \"${ROOT}\" && xattr -cr . && chmod -R u+w ."
+    if [[ -s "${ENGINE_LOG}" ]]; then
+      echo
+      echo "--- engine log (last 40 lines) ---"
+      tail -40 "${ENGINE_LOG}"
+      echo "--- end ---"
+    else
+      echo "No engine log output (process may have been killed by macOS before startup)."
+      echo "Try: codesign -s - --force --deep \"${ENGINE}\""
+    fi
+    echo
+    echo "Full log: ${ENGINE_LOG}"
     read -r -p "Press Enter to close..."
     exit 1
   fi
   if /usr/sbin/lsof -nP -iTCP:5002 -sTCP:LISTEN -t >/dev/null 2>&1; then
     READY=1
     break
+  fi
+  if (( i % 5 == 0 )); then
+    echo "  … waiting for engine (${i}s)"
   fi
   sleep 1
 done
@@ -87,7 +130,7 @@ if [[ -z "${APP}" ]]; then
 fi
 
 chmod -R u+w "${APP}" 2>/dev/null || true
-xattr -dr com.apple.quarantine "${APP}" 2>/dev/null || true
+xattr -cr "${APP}" 2>/dev/null || true
 
 MACOS_BIN="${APP}/Contents/MacOS/stirling-pdf"
 if [[ ! -x "${MACOS_BIN}" ]]; then
@@ -116,5 +159,6 @@ fi
 
 echo
 echo "French Reader engine is running (PID ${ENGINE_PID})."
+echo "Engine log: ${ENGINE_LOG}"
 echo "Leave this terminal open while using Stirling. Close it to stop the engine."
 wait "${ENGINE_PID}" 2>/dev/null || true
