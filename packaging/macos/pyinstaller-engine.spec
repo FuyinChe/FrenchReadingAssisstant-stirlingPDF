@@ -18,6 +18,7 @@ def _repo_root() -> pathlib.Path:
 root = _repo_root()
 engine_src = root / "extensions" / "french-reader-engine" / "src"
 version_json = engine_src / "french_reader" / "_plugin_version.json"
+fonts_dir = engine_src / "french_reader" / "assets" / "fonts"
 
 hiddenimports = collect_submodules("uvicorn")
 hiddenimports += collect_submodules("fastapi")
@@ -30,6 +31,8 @@ hiddenimports += [
     "french_reader.tts_service",
     "french_reader.ai_service",
     "french_reader.export_service",
+    "french_reader.pdf_fonts",
+    "french_reader.markdown_pdf",
     "french_reader.bubble_detector",
     "french_reader.paragraph_detector",
     "cv2",
@@ -46,7 +49,10 @@ a = Analysis(
     [str(root / "packaging" / "macos" / "engine-main.py")],
     pathex=[str(engine_src)],
     binaries=cv2_binaries,
-    datas=[(str(version_json), "french_reader")] + cv2_datas,
+    datas=[
+        (str(version_json), "french_reader"),
+        (str(fonts_dir), "french_reader/assets/fonts"),
+    ] + cv2_datas,
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},

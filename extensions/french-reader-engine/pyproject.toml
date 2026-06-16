@@ -48,6 +48,9 @@ packages = ["src/french_reader"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "src/french_reader/_plugin_version.json" = "french_reader/_plugin_version.json"
+"src/french_reader/assets/fonts/CharisSIL-Regular.ttf" = "french_reader/assets/fonts/CharisSIL-Regular.ttf"
+"src/french_reader/assets/fonts/CharisSIL-Bold.ttf" = "french_reader/assets/fonts/CharisSIL-Bold.ttf"
+"src/french_reader/assets/fonts/CharisSIL-Italic.ttf" = "french_reader/assets/fonts/CharisSIL-Italic.ttf"
 
 [tool.ruff]
 line-length = 100

@@ -142,6 +142,31 @@ if ($SmokeTestEngine) {
             Fail "OCR roundtrip failed — likely TESSDATA_PREFIX/tessdata path: $($_.Exception.Message)"
         }
 
+        $exportBody = @{
+            source_file_name = "demo.pdf"
+            entries          = @(
+                @{
+                    id           = "1"
+                    created_at   = "2026-06-13T10:00:00"
+                    file_name    = "demo.pdf"
+                    page         = 1
+                    text         = "Salut!"
+                    confidence   = 0.9
+                    translations = @{ translate = "Hello!" }
+                }
+            )
+        } | ConvertTo-Json -Depth 5 -Compress
+        try {
+            $export = Invoke-WebRequest -Uri "http://127.0.0.1:5002/french-reader/export/pdf" -Method POST `
+                -Body $exportBody -ContentType "application/json" -TimeoutSec 30 -UseBasicParsing
+            if ($export.StatusCode -ge 400 -or $export.Content[0] -ne 0x25 -or $export.Content[1] -ne 0x50) {
+                Fail "PDF export smoke test failed — Charis SIL fonts may be missing from PyInstaller bundle"
+            }
+            Write-Log "PDF export smoke test OK"
+        } catch {
+            Fail "PDF export smoke test failed: $($_.Exception.Message)"
+        }
+
         $corsHeaders = @{
             Origin = 'https://tauri.localhost'
             'Access-Control-Request-Method' = 'POST'

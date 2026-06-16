@@ -117,6 +117,15 @@ print('ocr_ready=%s bubble_ready=%s' % (s.get('ocr_ready'), s.get('bubble_ready'
   fi
   log "OCR roundtrip OK (HTTP ${ocr_status})"
 
+  export_status="$(curl -fsS -o /tmp/fra-export-smoke.pdf -w '%{http_code}' -X POST \
+    -H 'Content-Type: application/json' \
+    -d '{"source_file_name":"demo.pdf","entries":[{"id":"1","created_at":"2026-06-13T10:00:00","file_name":"demo.pdf","page":1,"text":"Salut!","confidence":0.9,"translations":{"translate":"Hello!"}}]}' \
+    "http://127.0.0.1:5002/french-reader/export/pdf" 2>/dev/null)" || export_status=""
+  if [[ -z "${export_status}" || "${export_status}" -ge 400 ]] || ! head -c 4 /tmp/fra-export-smoke.pdf 2>/dev/null | grep -q '%PDF'; then
+    fail "PDF export smoke test failed (HTTP ${export_status:-none}) — check Charis SIL fonts in PyInstaller bundle"
+  fi
+  log "PDF export smoke test OK"
+
   if ! curl -fsS -o /dev/null -X OPTIONS \
     -H 'Origin: https://tauri.localhost' \
     -H 'Access-Control-Request-Method: POST' \
