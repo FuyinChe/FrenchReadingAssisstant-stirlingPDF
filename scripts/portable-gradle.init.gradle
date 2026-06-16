@@ -1,0 +1,36 @@
+// Portable desktop Gradle overrides for CI stability.
+//
+// Why:
+// - build.shibboleth.net is often unreachable on GitHub Actions.
+// - core-only portable builds do not need proprietary SAML deps.
+//
+// This init script avoids mutating upstream build.gradle and applies only to
+// portable bootJar invocations that pass `--init-script`.
+
+allprojects {
+    repositories {
+        // Prefer Central first for common artifacts.
+        mavenCentral()
+    }
+
+    configurations.configureEach {
+        // Portable desktop build never uses proprietary SAML runtime paths.
+        exclude group: 'com.coveo', module: 'saml-client'
+        exclude group: 'org.opensaml'
+    }
+
+    dependencies {
+        components {
+            withModule('io.github.pixee:java-security-toolkit') {
+                allVariants {
+                    withDependencies { deps ->
+                        deps.removeAll { d ->
+                            (d.group == 'com.coveo' && d.name == 'saml-client') ||
+                            d.group == 'org.opensaml'
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
