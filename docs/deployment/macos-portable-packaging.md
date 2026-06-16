@@ -1,7 +1,7 @@
 # macOS 便携 ZIP 打包指南
 
 > **基座：** [Stirling PDF](https://github.com/Stirling-Tools/Stirling-PDF)  
-> [Windows 打包](windows-portable-packaging.md) · [English summary](#english-summary)
+> [Windows 打包](windows-portable-packaging.md) · [打包问题手册](portable-packaging-playbook.md) · [English summary](#english-summary)
 
 面向 **macOS** 的解压即用方案：双击 **`Start French Reading Assistant.command`**。
 

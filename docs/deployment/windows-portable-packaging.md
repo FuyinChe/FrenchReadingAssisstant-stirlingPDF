@@ -2,6 +2,7 @@
 
 > **基座：** [Stirling PDF](https://github.com/Stirling-Tools/Stirling-PDF)  
 > **本仓库：** [FrenchReadingAssisstant-stirlingPDF](https://github.com/FuyinChe/FrenchReadingAssisstant-stirlingPDF)  
+> [macOS 打包](macos-portable-packaging.md) · [打包问题手册](portable-packaging-playbook.md)  
 > [English summary](#english-summary)
 
 面向 **Windows 10/11 x64** 的「解压即用」方案：用户双击 **`Start French Reading Assistant.bat`** 即可启动。

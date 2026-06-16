@@ -95,6 +95,7 @@ interface FrenchReaderContextValue {
   bubblePreprocess: boolean;
   setBubblePreprocess: (enabled: boolean) => void;
   bubbleDetectorReady: boolean | null;
+  bubbleStatusLoadFailed: boolean;
   lastBubbleDetector: string | null;
   getParagraphsForPage: (page: number) => DetectedParagraph[];
   detectParagraphsForPage: (params: {
@@ -109,6 +110,7 @@ interface FrenchReaderContextValue {
   paragraphPreprocess: boolean;
   setParagraphPreprocess: (enabled: boolean) => void;
   paragraphDetectorReady: boolean | null;
+  paragraphStatusLoadFailed: boolean;
   lastParagraphDetector: string | null;
 }
 
@@ -297,6 +299,7 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
       bubblePreprocess: bubbleDetection.bubblePreprocess,
       setBubblePreprocess: bubbleDetection.setBubblePreprocess,
       bubbleDetectorReady: bubbleDetection.bubbleDetectorReady,
+      bubbleStatusLoadFailed: bubbleDetection.bubbleStatusLoadFailed,
       lastBubbleDetector: bubbleDetection.lastBubbleDetector,
       getParagraphsForPage: paragraphDetection.getParagraphsForPage,
       detectParagraphsForPage: paragraphDetection.detectParagraphsForPage,
@@ -307,6 +310,7 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
       paragraphPreprocess: paragraphDetection.paragraphPreprocess,
       setParagraphPreprocess: paragraphDetection.setParagraphPreprocess,
       paragraphDetectorReady: paragraphDetection.paragraphDetectorReady,
+      paragraphStatusLoadFailed: paragraphDetection.paragraphStatusLoadFailed,
       lastParagraphDetector: paragraphDetection.lastParagraphDetector,
     }),
     [

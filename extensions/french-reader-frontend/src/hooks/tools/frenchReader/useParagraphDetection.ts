@@ -17,6 +17,7 @@ export function useParagraphDetection() {
   const [paragraphDetectorReady, setParagraphDetectorReady] = useState<boolean | null>(
     null,
   );
+  const [paragraphStatusLoadFailed, setParagraphStatusLoadFailed] = useState(false);
   const [lastParagraphDetector, setLastParagraphDetector] = useState<string | null>(null);
 
   useEffect(() => {
@@ -25,11 +26,13 @@ export function useParagraphDetection() {
       .then((status) => {
         if (!cancelled) {
           setParagraphDetectorReady(status.opencv_available);
+          setParagraphStatusLoadFailed(false);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setParagraphDetectorReady(false);
+          setParagraphDetectorReady(null);
+          setParagraphStatusLoadFailed(true);
         }
       });
     return () => {
@@ -106,6 +109,7 @@ export function useParagraphDetection() {
     paragraphPreprocess,
     setParagraphPreprocess,
     paragraphDetectorReady,
+    paragraphStatusLoadFailed,
     lastParagraphDetector,
   };
 }

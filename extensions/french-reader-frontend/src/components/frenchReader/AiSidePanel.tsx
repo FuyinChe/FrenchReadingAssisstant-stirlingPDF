@@ -42,6 +42,7 @@ export function AiSidePanel({ activeFile, currentPage }: AiSidePanelProps) {
     bubblePreprocess,
     setBubblePreprocess,
     bubbleDetectorReady,
+    bubbleStatusLoadFailed,
     lastBubbleDetector,
     getBubblesForPage,
     detectParagraphsForPage,
@@ -50,6 +51,7 @@ export function AiSidePanel({ activeFile, currentPage }: AiSidePanelProps) {
     paragraphDetectError,
     setParagraphPreprocess,
     paragraphDetectorReady,
+    paragraphStatusLoadFailed,
     lastParagraphDetector,
     getParagraphsForPage,
   } = useFrenchReaderContext();
@@ -83,8 +85,8 @@ export function AiSidePanel({ activeFile, currentPage }: AiSidePanelProps) {
     setBubblePreprocess(enabled);
     setParagraphPreprocess(enabled);
   };
-  const detectOpenCvReady =
-    bubbleDetectorReady !== false && paragraphDetectorReady !== false;
+  const engineStatusUnreachable =
+    bubbleStatusLoadFailed || paragraphStatusLoadFailed;
 
   return (
     <Stack gap="md">
@@ -129,7 +131,7 @@ export function AiSidePanel({ activeFile, currentPage }: AiSidePanelProps) {
                   fullWidth
                   leftSection={<AutoFixHighIcon sx={{ fontSize: 16 }} />}
                   loading={bubbleDetectLoading}
-                  disabled={!activeFile || bubbleDetectorReady === false}
+                  disabled={!activeFile || engineStatusUnreachable || bubbleDetectorReady === false}
                   onClick={() => void handleDetectBubbles()}
                 >
                   {t("frenchReader.bubbles.detect", "BUBBLES")}
@@ -154,7 +156,7 @@ export function AiSidePanel({ activeFile, currentPage }: AiSidePanelProps) {
                   fullWidth
                   leftSection={<AutoFixHighIcon sx={{ fontSize: 16 }} />}
                   loading={paragraphDetectLoading}
-                  disabled={!activeFile || paragraphDetectorReady === false}
+                  disabled={!activeFile || engineStatusUnreachable || paragraphDetectorReady === false}
                   onClick={() => void handleDetectParagraphs()}
                 >
                   {t("frenchReader.paragraphs.detect", "PARAGRAPHS")}
@@ -200,7 +202,16 @@ export function AiSidePanel({ activeFile, currentPage }: AiSidePanelProps) {
             onChange={(event) => setDetectPreprocess(event.currentTarget.checked)}
           />
 
-          {!detectOpenCvReady && (
+          {engineStatusUnreachable && (
+            <Alert color="red" variant="light" title={t("frenchReader.detect.engineUnreachable", "French Reader engine unavailable")}>
+              {t(
+                "frenchReader.detect.engineUnreachableHint",
+                "Start the app via Start French Reading Assistant (.bat / .command), keep that terminal window open, then retry. On macOS run ./sign-engine-bundle.sh if the engine was killed (Killed: 9).",
+              )}
+            </Alert>
+          )}
+
+          {!engineStatusUnreachable && bubbleDetectorReady === false && (
             <Alert color="yellow" variant="light">
               {t(
                 "frenchReader.detect.notReady",

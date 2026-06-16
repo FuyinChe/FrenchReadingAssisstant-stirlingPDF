@@ -10,6 +10,7 @@ export function useBubbleDetection() {
   const [bubbleDetectError, setBubbleDetectError] = useState<string | null>(null);
   const [bubblePreprocess, setBubblePreprocess] = useState(false);
   const [bubbleDetectorReady, setBubbleDetectorReady] = useState<boolean | null>(null);
+  const [bubbleStatusLoadFailed, setBubbleStatusLoadFailed] = useState(false);
   const [lastBubbleDetector, setLastBubbleDetector] = useState<string | null>(null);
 
   useEffect(() => {
@@ -18,11 +19,13 @@ export function useBubbleDetection() {
       .then((status) => {
         if (!cancelled) {
           setBubbleDetectorReady(status.ready);
+          setBubbleStatusLoadFailed(false);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setBubbleDetectorReady(false);
+          setBubbleDetectorReady(null);
+          setBubbleStatusLoadFailed(true);
         }
       });
     return () => {
@@ -96,6 +99,7 @@ export function useBubbleDetection() {
     bubblePreprocess,
     setBubblePreprocess,
     bubbleDetectorReady,
+    bubbleStatusLoadFailed,
     lastBubbleDetector,
   };
 }
