@@ -84,7 +84,8 @@ Write-Log "Creating bundled JRE with jlink..."
     --output $RuntimeJre
 if ($LASTEXITCODE -ne 0) { throw "jlink failed" }
 
-Get-ChildItem -Recurse $RuntimeJre | ForEach-Object { $_.IsReadOnly = $false }
+# jlink emits read-only files; Tauri's resource copier preserves permissions on rebuild.
+Get-ChildItem -Recurse -File $RuntimeJre | ForEach-Object { $_.IsReadOnly = $false }
 
 $ReleaseMarker = Join-Path $RuntimeJre "release"
 if (-not (Test-Path $ReleaseMarker)) {
