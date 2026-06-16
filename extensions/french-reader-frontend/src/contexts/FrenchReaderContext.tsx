@@ -28,8 +28,6 @@ import { exportHistoryPdf } from "@app/services/frenchReaderApi";
 import {
   appendOcrHistory,
   clearOcrHistory,
-  downloadBlobFile,
-  downloadTextFile,
   buildHistoryExportFilename,
   exportHistoryAsMarkdown,
   exportHistoryAsText,
@@ -37,6 +35,7 @@ import {
   removeOcrHistoryEntry,
   updateOcrHistoryTranslations,
 } from "@app/services/frenchReaderHistory";
+import { saveExportFile } from "@app/services/saveExportFile";
 
 interface FrenchReaderContextValue {
   selection: FrenchReaderSelection | null;
@@ -62,6 +61,9 @@ interface FrenchReaderContextValue {
   clearHistory: () => void;
   exportHistory: (format: "txt" | "md" | "pdf", sourceFileName: string) => Promise<void>;
   exportError: string | null;
+  exportSuccess: { displayPath: string; usedSystemDialog: boolean } | null;
+  exportInProgress: boolean;
+  clearExportFeedback: () => void;
   aiModes: AiExplainMode[];
   setAiModes: (modes: AiExplainMode[]) => void;
   aiTargetLang: string;
@@ -135,6 +137,16 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
   const [history, setHistory] = useState<OcrHistoryEntry[]>(() => loadOcrHistory());
   const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [exportSuccess, setExportSuccess] = useState<{
+    displayPath: string;
+    usedSystemDialog: boolean;
+  } | null>(null);
+  const [exportInProgress, setExportInProgress] = useState(false);
+
+  const clearExportFeedback = useCallback(() => {
+    setExportError(null);
+    setExportSuccess(null);
+  }, []);
 
   const ttsSettings = useTtsSettings();
   const ttsPlay = useTtsPlay();
@@ -220,23 +232,39 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
     async (format: "txt" | "md" | "pdf", sourceFileName: string) => {
       if (history.length === 0) return;
       setExportError(null);
+      setExportSuccess(null);
+      setExportInProgress(true);
       const filename = buildHistoryExportFilename(sourceFileName, format);
       try {
+        let result;
         if (format === "md") {
-          downloadTextFile(filename, exportHistoryAsMarkdown(history, sourceFileName));
-          return;
+          result = await saveExportFile(
+            filename,
+            exportHistoryAsMarkdown(history, sourceFileName),
+            format,
+          );
+        } else if (format === "txt") {
+          result = await saveExportFile(
+            filename,
+            exportHistoryAsText(history, sourceFileName),
+            format,
+          );
+        } else {
+          const blob = await exportHistoryPdf({
+            sourceFileName,
+            entries: history,
+          });
+          result = await saveExportFile(filename, blob, format);
         }
-        if (format === "txt") {
-          downloadTextFile(filename, exportHistoryAsText(history, sourceFileName));
-          return;
-        }
-        const blob = await exportHistoryPdf({
-          sourceFileName,
-          entries: history,
+        if (result.cancelled) return;
+        setExportSuccess({
+          displayPath: result.displayPath,
+          usedSystemDialog: result.usedSystemDialog,
         });
-        downloadBlobFile(filename, blob);
       } catch (error) {
         setExportError(error instanceof Error ? error.message : "Export failed");
+      } finally {
+        setExportInProgress(false);
       }
     },
     [history],
@@ -270,6 +298,9 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
       clearHistory,
       exportHistory,
       exportError,
+      exportSuccess,
+      exportInProgress,
+      clearExportFeedback,
       aiModes: aiSettings.modes,
       setAiModes: aiSettings.setModes,
       aiTargetLang: aiSettings.targetLang,
@@ -329,6 +360,9 @@ export function FrenchReaderProvider({ children }: { children: ReactNode }) {
       clearHistory,
       exportHistory,
       exportError,
+      exportSuccess,
+      exportInProgress,
+      clearExportFeedback,
       aiSettings,
       ttsSettings,
       playTts,

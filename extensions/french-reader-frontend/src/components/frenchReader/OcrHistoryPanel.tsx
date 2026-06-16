@@ -1,15 +1,4 @@
-import {
-  Alert,
-  Button,
-  CopyButton,
-  Group,
-  Menu,
-  Paper,
-  ScrollArea,
-  Stack,
-  Text,
-  Tooltip,
-} from "@mantine/core";
+import { Alert, Button, Group, Menu, Paper, ScrollArea, Stack, Text, Tooltip } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -61,6 +50,9 @@ export function OcrHistoryPanel({ sourceFileName }: OcrHistoryPanelProps) {
     clearHistory,
     exportHistory,
     exportError,
+    exportSuccess,
+    exportInProgress,
+    clearExportFeedback,
   } = useFrenchReaderContext();
 
   if (history.length === 0) {
@@ -97,19 +89,29 @@ export function OcrHistoryPanel({ sourceFileName }: OcrHistoryPanelProps) {
               <Button
                 size="compact-xs"
                 variant="light"
+                loading={exportInProgress}
                 leftSection={<DownloadIcon sx={{ fontSize: 14 }} />}
               >
                 {t("frenchReader.history.export", "Export")}
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
-              <Menu.Item onClick={() => exportHistory("pdf", sourceFileName)}>
+              <Menu.Item
+                disabled={exportInProgress}
+                onClick={() => void exportHistory("pdf", sourceFileName)}
+              >
                 {t("frenchReader.history.exportPdf", "Export as .pdf")}
               </Menu.Item>
-              <Menu.Item onClick={() => exportHistory("md", sourceFileName)}>
+              <Menu.Item
+                disabled={exportInProgress}
+                onClick={() => void exportHistory("md", sourceFileName)}
+              >
                 {t("frenchReader.history.exportMd", "Export as .md")}
               </Menu.Item>
-              <Menu.Item onClick={() => exportHistory("txt", sourceFileName)}>
+              <Menu.Item
+                disabled={exportInProgress}
+                onClick={() => void exportHistory("txt", sourceFileName)}
+              >
                 {t("frenchReader.history.exportTxt", "Export as .txt")}
               </Menu.Item>
             </Menu.Dropdown>
@@ -130,6 +132,29 @@ export function OcrHistoryPanel({ sourceFileName }: OcrHistoryPanelProps) {
       {exportError && (
         <Alert color="red" variant="light" mb="xs" title={t("frenchReader.history.exportError", "Export failed")}>
           {exportError}
+        </Alert>
+      )}
+
+      {exportSuccess && !exportError && (
+        <Alert
+          color="green"
+          variant="light"
+          mb="xs"
+          title={t("frenchReader.history.exportSuccess", "Export saved")}
+          withCloseButton
+          onClose={clearExportFeedback}
+        >
+          {exportSuccess.usedSystemDialog
+            ? t(
+                "frenchReader.history.exportSavedToPath",
+                "Saved to: {{path}}",
+                { path: exportSuccess.displayPath },
+              )
+            : t(
+                "frenchReader.history.exportSavedToDownloads",
+                "Saved to your Downloads folder: {{path}}",
+                { path: exportSuccess.displayPath },
+              )}
         </Alert>
       )}
 
