@@ -17,6 +17,9 @@ dist/portable-windows/
 └── French-Reading-Assistant-{version}-windows-x64.zip
     ├── Start French Reading Assistant.bat   ← 用户双击这个
     ├── README.txt
+    ├── LICENSE                              ← MIT（本扩展原创部分）
+    ├── THIRD-PARTY-NOTICES.md               ← Stirling + 第三方组件
+    ├── licenses\STIRLING-PDF-LICENSE        ← Stirling 上游许可全文
     ├── VERSION.txt                          ← 插件版本与 build id
     ├── app\                                 ← Stirling 桌面（exe + JRE + JAR）
     │   ├── stirling-pdf.exe

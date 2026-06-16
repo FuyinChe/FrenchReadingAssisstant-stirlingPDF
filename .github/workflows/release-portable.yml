@@ -326,4 +326,6 @@ jobs:
             - [Windows portable packaging](https://github.com/${{ github.repository }}/blob/main/docs/deployment/windows-portable-packaging.md)
             - [macOS portable packaging](https://github.com/${{ github.repository }}/blob/main/docs/deployment/macos-portable-packaging.md)
 
+            **License:** French Reading Assistant extensions are [MIT](https://github.com/${{ github.repository }}/blob/main/LICENSE). Bundled Stirling PDF follows [Stirling's mixed license](https://github.com/Stirling-Tools/Stirling-PDF/blob/main/LICENSE) — see `THIRD-PARTY-NOTICES.md` in each zip. Not an official Stirling PDF product.
+
             **Powered by [Stirling PDF](https://github.com/Stirling-Tools/Stirling-PDF)**

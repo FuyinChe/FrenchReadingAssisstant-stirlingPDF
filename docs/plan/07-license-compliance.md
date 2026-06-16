@@ -4,12 +4,19 @@
 
 ## 本仓库（FrenchPdfReader extensions）
 
-| 组件 | 路径 | 建议许可证 |
-|------|------|------------|
-| 文档 | `docs/` | 与主仓库一致（待定，建议 MIT） |
-| French Reader Engine | `extensions/french-reader-engine/` | MIT / Apache-2.0（自研） |
-| French Reader Frontend | `extensions/french-reader-frontend/` | 与主仓库一致 |
-| 补丁 | `patches/` | 与主仓库一致 |
+| 组件 | 路径 | 许可证 |
+|------|------|--------|
+| 文档 | `docs/` | **MIT**（见根目录 [LICENSE](../LICENSE)） |
+| French Reader Engine | `extensions/french-reader-engine/` | **MIT** |
+| French Reader Frontend | `extensions/french-reader-frontend/` | **MIT** |
+| 补丁 | `patches/` | **MIT** |
+| 打包 / 脚本 | `packaging/`, `scripts/` | **MIT** |
+
+根目录文件：
+
+- [LICENSE](../LICENSE) — 本仓库原创代码 MIT 全文  
+- [licenses/STIRLING-PDF-LICENSE](../licenses/STIRLING-PDF-LICENSE) — Stirling 上游 LICENSE 副本  
+- [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md) — 便携包 / 发行用摘要  
 
 ## Stirling PDF 上游
 
@@ -51,8 +58,11 @@
 
 ## 建议动作
 
+- [x] 根目录添加 MIT [LICENSE](../LICENSE)（French Reader 原创部分）
+- [x] 添加 [licenses/STIRLING-PDF-LICENSE](../licenses/STIRLING-PDF-LICENSE) 与 [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md)
+- [x] 便携 zip 附带 LICENSE 与 THIRD-PARTY-NOTICES
 - [ ] 正式发布前由法务/负责人确认 Stirling 订阅与分发方式  
-- [ ] 在 README 与 About 页注明「基于 Stirling PDF 的扩展版，非官方」  
+- [x] 在 README 注明「基于 Stirling PDF 的扩展版，非官方」  
 - [ ] 若向 Stirling 上游贡献 Tool，单独走 CONTRIBUTING / CLA  
 
 ## 参考

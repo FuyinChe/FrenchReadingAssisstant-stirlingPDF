@@ -158,6 +158,9 @@ if (-not $SkipDesktop) {
 
 Copy-Item -Force (Join-Path $Root "packaging/windows/Start French Reading Assistant.bat") $StagingDir
 Copy-Item -Force (Join-Path $Root "packaging/windows/README.txt") $StagingDir
+Copy-Item -Force (Join-Path $Root "LICENSE") $StagingDir
+Copy-Item -Force (Join-Path $Root "THIRD-PARTY-NOTICES.md") $StagingDir
+Copy-Item -Recurse -Force (Join-Path $Root "licenses") (Join-Path $StagingDir "licenses")
 
 $VersionInfo = Get-Content (Join-Path $Root "extensions/french-reader-engine/src/french_reader/_plugin_version.json") -Raw | ConvertFrom-Json
 $VersionText = @"
