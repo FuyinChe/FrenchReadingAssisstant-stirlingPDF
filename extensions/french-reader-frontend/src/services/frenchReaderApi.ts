@@ -220,7 +220,12 @@ export async function synthesizeTts(params: {
     throw new Error(await readErrorDetail(response));
   }
 
-  return response.blob();
+  const buffer = await response.arrayBuffer();
+  if (buffer.byteLength === 0) {
+    throw new Error("TTS produced no audio");
+  }
+  const contentType = response.headers.get("content-type") ?? "audio/mpeg";
+  return new Blob([buffer], { type: contentType });
 }
 
 export async function fetchAiStatus(
