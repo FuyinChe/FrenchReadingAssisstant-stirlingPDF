@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { OcrLineResult, TtsRate } from "@app/hooks/tools/frenchReader/types";
 import { synthesizeTts } from "@app/services/frenchReaderApi";
+import { playTtsAudio } from "@app/services/playTtsAudio";
 
 function segmentsFromText(text: string, lines: OcrLineResult[]): string[] {
   if (lines.length > 0) {
@@ -18,19 +19,11 @@ export function useTtsPlay() {
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const objectUrlRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const releaseAudio = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
-    audioRef.current?.pause();
-    audioRef.current = null;
-    if (objectUrlRef.current) {
-      URL.revokeObjectURL(objectUrlRef.current);
-      objectUrlRef.current = null;
-    }
     setPlaying(false);
   }, []);
 
@@ -71,27 +64,19 @@ export function useTtsPlay() {
 
         if (controller.signal.aborted) return;
 
-        const url = URL.createObjectURL(blob);
-        objectUrlRef.current = url;
-        const audio = new Audio(url);
-        audioRef.current = audio;
         setPlaying(true);
-
-        await new Promise<void>((resolve, reject) => {
-          audio.onended = () => resolve();
-          audio.onerror = () => reject(new Error("Audio playback failed"));
-          void audio.play().catch(reject);
-        }).catch((err) => {
+        try {
+          await playTtsAudio(blob, controller.signal);
+        } catch (err) {
           if (!controller.signal.aborted) {
-            setError(err instanceof Error ? err.message : "Playback failed");
+            const message = err instanceof Error ? err.message : "Playback failed";
+            setError(
+              message.toLowerCase().includes("not supported")
+                ? "TTS audio playback is not supported in this environment. Try updating the app."
+                : message,
+            );
           }
-        });
-
-        if (objectUrlRef.current) {
-          URL.revokeObjectURL(objectUrlRef.current);
-          objectUrlRef.current = null;
         }
-        audioRef.current = null;
 
         if (controller.signal.aborted) return;
       }
