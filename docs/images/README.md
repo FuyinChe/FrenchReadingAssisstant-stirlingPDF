@@ -1,12 +1,13 @@
 # Documentation images / 文档截图
 
-Screenshots for user guides live under `docs/images/user-guide/`. Add PNG or WebP files; keep filenames stable so links in `docs/en/` and `docs/zh/` do not break.
+Screenshots for user guides live under `docs/images/user-guide/`. README preview images live under [`screenshots/preview/`](../../screenshots/preview/). Add PNG or WebP files; keep filenames stable so links in `docs/en/` and `docs/zh/` do not break.
 
-用户手册截图放在 `docs/images/user-guide/`。请使用 PNG 或 WebP，并保持文件名稳定，以便中英文文档链接一致。
+用户手册截图放在 `docs/images/user-guide/`；根目录 README 预览图放在 [`screenshots/preview/`](../../screenshots/preview/)。请使用 PNG 或 WebP，并保持文件名稳定，以便中英文文档链接一致。
 
 ## Directory layout
 
 ```
+screenshots/preview/             # 2–4 images for root README only
 docs/images/user-guide/
 ├── en/                          # English UI screenshots
 │   ├── 01-open-tool.png         # (pending) Open French Reading Assistant

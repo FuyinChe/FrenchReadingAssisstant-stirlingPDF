@@ -87,7 +87,27 @@ Requires JDK 25, Node 20+, Rust (see [Stirling DeveloperGuide](https://github.co
 | **macOS portable ZIP** | [docs/deployment/macos-portable-packaging.md](docs/deployment/macos-portable-packaging.md) | macOS ARM + Intel 解压即用 |
 | **End-user distribution** | [docs/plan/10-distribution-strategy.md](docs/plan/10-distribution-strategy.md) | **普通用户发行策略（桌面包优先）** |
 
-Screenshot assets: [docs/images/README.md](docs/images/README.md)
+## Screenshots / 截图
+
+Preview images below; step-by-step gallery: [User guide (EN)](docs/en/user-guide.md) · [用户手册（中文）](docs/zh/user-guide.md)
+
+![Open French Reading Assistant in Stirling PDF](screenshots/preview/001.png)
+*Figure — Recommended tools → French Reading Assistant.*
+
+![Paragraph auto-detection with OpenCV enhance](screenshots/preview/004.png)
+*Figure — PARAGRAPHS detector on a picture-book page.*
+
+![Manual selection and French OCR result](screenshots/preview/005.png)
+*Figure — Drag a rectangle → recognized text with confidence.*
+
+![AI Explain — translation and vocabulary](screenshots/preview/011.png)
+*Figure — Translate + Vocabulary output after Explain.*
+
+![Recognition history](screenshots/preview/014.png)
+*Figure — History entries with TTS and export.*
+
+![Exported PDF study notes](screenshots/preview/016.png)
+*Figure — PDF export with French, translation, and vocabulary.*
 
 ---
 
