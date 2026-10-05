@@ -4,6 +4,7 @@
   --muted: #6e655c;
   --line: #e3d8c6;
   --card: #fffdf8;
+  --accent: #2c6b4a;
   --font-serif: Fraunces, Georgia, serif;
   --font-sans: "Source Sans 3", "PingFang SC", "Noto Sans CJK SC", sans-serif;
   color: var(--ink);
@@ -31,15 +32,10 @@ a {
   padding: 28px 0 64px;
 }
 
-.top,
-.top-right {
+.top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.top {
+  gap: 0.75rem 0.85rem;
   margin-bottom: 8px;
 }
 
@@ -47,7 +43,9 @@ a {
   display: flex;
   align-items: baseline;
   gap: 10px;
+  min-width: 0;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .brand-mark {
@@ -63,7 +61,9 @@ a {
 
 .page-nav {
   display: flex;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+  margin-left: auto;
   font-size: 0.92rem;
 }
 
@@ -77,27 +77,32 @@ a {
 }
 
 .lang {
-  display: flex;
-  padding: 3px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  padding: 2px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--card);
 }
 
 .lang button {
+  appearance: none;
   border: 0;
   background: transparent;
   color: var(--muted);
   border-radius: 999px;
-  padding: 6px 12px;
-  font-size: 0.85rem;
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1;
+  min-height: 1.85rem;
+  padding: 0 0.65rem;
   cursor: pointer;
-  font-family: inherit;
 }
 
 .lang button[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--accent);
+  color: #ffffff;
 }
 
 .hero {
@@ -124,6 +129,7 @@ a {
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.06em;
+  text-decoration: none;
 }
 
 .eyebrow {
@@ -132,6 +138,12 @@ a {
   font-size: 0.78rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  text-decoration: none;
+}
+
+.code-badge:hover,
+.eyebrow:hover {
+  opacity: 0.85;
 }
 
 h1 {
@@ -269,9 +281,35 @@ footer {
 }
 
 @media (max-width: 720px) {
-  .top,
-  .top-right {
-    flex-direction: column;
-    align-items: flex-start;
+  .top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 0.75rem;
+    row-gap: 0.35rem;
+  }
+
+  .brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .lang {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .lang button {
+    font-size: 0.72rem;
+    min-height: 1.65rem;
+    padding: 0 0.5rem;
+  }
+
+  .page-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin-left: 0;
+    justify-content: flex-start;
   }
 }
