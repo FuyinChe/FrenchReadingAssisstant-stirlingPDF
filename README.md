@@ -80,6 +80,7 @@ Requires JDK 25, Node 20+, Rust (see [Stirling DeveloperGuide](https://github.co
 |-------|----|------|
 | Getting started | [docs/en/getting-started.md](docs/en/getting-started.md) | [docs/zh/getting-started.md](docs/zh/getting-started.md) |
 | User guide (+ screenshots) | [docs/en/user-guide.md](docs/en/user-guide.md) | [docs/zh/user-guide.md](docs/zh/user-guide.md) |
+| **Website (Vercel)** | [docs/zh/web-vercel.md](docs/zh/web-vercel.md) | 介绍与下载页；安装包在 GitHub Releases |
 | Dev setup (detailed) | [docs/dev-setup.md](docs/dev-setup.md) | 同上（中英混排，偏开发者） |
 | Architecture / plan | [docs/plan/](docs/plan/) | 计划文档（中文为主） |
 | Sidecar fallback | [docs/deployment/sidecar-fallback.md](docs/deployment/sidecar-fallback.md) | Sidecar 降级（技术用户） |

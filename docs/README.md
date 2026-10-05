@@ -9,6 +9,7 @@
 |---------|------|
 | [Getting started](en/getting-started.md) | [快速开始](zh/getting-started.md) |
 | [User guide](en/user-guide.md) | [用户手册](zh/user-guide.md) |
+| [Website (Vercel landing)](zh/web-vercel.md) | [官网落地页（介绍与下载）](zh/web-vercel.md) |
 | [Windows portable ZIP](deployment/windows-portable-packaging.md) | [Windows 解压即用打包](deployment/windows-portable-packaging.md) |
 | [macOS portable ZIP](deployment/macos-portable-packaging.md) | [macOS 解压即用（ARM + Intel）](deployment/macos-portable-packaging.md) |
 | [Distribution strategy (end users)](plan/10-distribution-strategy.md) | [打包发行策略](plan/10-distribution-strategy.md) |

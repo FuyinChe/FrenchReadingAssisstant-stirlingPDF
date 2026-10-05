@@ -3,20 +3,25 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from french_reader.config import settings
 from french_reader.plugin_version import get_plugin_version_info, get_plugin_version_string
+from french_reader.rate_limit import RateLimitMiddleware
 from french_reader.router import router
 
 _plugin = get_plugin_version_info()
 app = FastAPI(title="French Reader Engine", version=get_plugin_version_string())
+
+app.add_middleware(RateLimitMiddleware, max_per_minute=settings.rate_limit_per_minute)
 
 if settings.cors_origins:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
         # Tauri / WebView2 desktop origins vary by OS (tauri.localhost, ipc.localhost, ports).
+        # Vercel preview/production hosts: *.vercel.app
         allow_origin_regex=(
             r"^https?://([\w-]+\.)?localhost(:\d+)?$"
             r"|^https?://127\.0\.0\.1(:\d+)?$"
             r"|^tauri://"
+            r"|^https://[\w.-]+\.vercel\.app$"
         ),
         allow_credentials=True,
         allow_methods=["*"],
