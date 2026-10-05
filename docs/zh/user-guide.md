@@ -12,7 +12,7 @@
 |------|------|
 | 开发环境 | `./scripts/dev.sh`（见 [dev-setup.md](../dev-setup.md)） |
 | Docker | `./scripts/docker-up.sh` |
-| 桌面 / 便携版 | 运行 `Start French Reading Assistant` 启动脚本（见 [发行策略](../plan/10-distribution-strategy.md)） |
+| 桌面 / 便携版 | 从 [GitHub Releases](https://github.com/FuyinChe/FrenchReadingAssisstant-stirlingPDF/releases/latest) 或 [官网落地页](web-vercel.md) 下载 zip，运行 `Start French Reading Assistant` |
 
 AI 功能需要 LLM API Key：Settings 中选择厂商并保存，或在 `.env` 中配置 `FRENCH_READER_LLM_API_KEY`。TTS 使用 edge-tts（需联网）。
 

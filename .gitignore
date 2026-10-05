@@ -35,6 +35,7 @@ data/cache/
 
 # Node (if any local tooling)
 node_modules/
+.vercel/
 
 # Windows portable build artifacts
 dist/

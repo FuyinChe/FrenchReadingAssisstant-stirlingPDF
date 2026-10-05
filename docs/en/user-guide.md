@@ -12,7 +12,7 @@ Use the French Reading Assistant **inside [Stirling PDF](https://github.com/Stir
 |------|---------|
 | Development | `./scripts/dev.sh` ([dev-setup.md](../dev-setup.md)) |
 | Docker | `./scripts/docker-up.sh` |
-| Desktop / portable | `Start French Reading Assistant` launcher (see [distribution strategy](../plan/10-distribution-strategy.md)) |
+| Desktop / portable | Download the zip from [GitHub Releases](https://github.com/FuyinChe/FrenchReadingAssisstant-stirlingPDF/releases/latest) or the [website](../zh/web-vercel.md), then run `Start French Reading Assistant` |
 
 AI features need an LLM API key: Settings → LLM provider, or `FRENCH_READER_LLM_API_KEY` in `.env`. TTS uses edge-tts (network required).
 

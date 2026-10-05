@@ -1,0 +1,33 @@
+# Container Function image for Vercel (Tesseract + OpenCV).
+# Build context: this directory (extensions/french-reader-engine).
+FROM python:3.12-slim-bookworm
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        tesseract-ocr \
+        tesseract-ocr-fra \
+        libgl1 \
+        libglib2.0-0 \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY pyproject.toml ./
+COPY src ./src
+
+RUN pip install --no-cache-dir hatchling \
+    && pip install --no-cache-dir ".[bubble]"
+
+ENV FRENCH_READER_ENABLED=true \
+    FRENCH_READER_HOST=0.0.0.0 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app/src \
+    PORT=8080
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=20s --timeout=5s --start-period=30s --retries=5 \
+    CMD curl -fsS http://127.0.0.1:${PORT:-8080}/health || exit 1
+
+CMD ["sh", "-c", "python -m uvicorn french_reader.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
