@@ -23,11 +23,12 @@ npm run dev
 
 ## 部署到 Vercel
 
-1. 仓库连到 Vercel，根目录用本仓库 [`vercel.json`](../../vercel.json)（构建 `apps/web`）。
-2. 也可把项目 Root Directory 设为 `apps/web`。
-3. 站点会请求 GitHub API `releases/latest`；尚无发行包时按钮退化为 Releases 页面。
+1. 仓库连到 Vercel。
+2. **Settings → General → Root Directory** 设为 **`apps/web`**（或留空用仓库根的 [`vercel.json`](../../vercel.json)）。
+3. **Framework Preset** 选 **Vite**。不要选 FastAPI / Python。
+4. 不要把 Root Directory 设成 `extensions/french-reader-engine`，否则会报 `No FastAPI entrypoint found`。
 
-无需引擎环境变量。
+站点会请求 GitHub API `releases/latest`；尚无发行包时按钮退化为 Releases 页面。无需引擎环境变量。
 
 ## 下载资源命名
 

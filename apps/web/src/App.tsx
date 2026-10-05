@@ -157,38 +157,30 @@ export function App() {
           <span className="brand-mark">LearnLanguage</span>
           <span className="brand-host">.net</span>
         </a>
-        <div className="top-right">
-          <nav className="page-nav">
-            <a href="#download">{t.download}</a>
-            <a href="#usage">{t.usage}</a>
-            <a href="#about">{t.about}</a>
-          </nav>
-          <div className="lang" role="group" aria-label="语言">
-            <button
-              type="button"
-              aria-pressed={lang === "zh"}
-              onClick={() => setLang("zh")}
-            >
-              中文
-            </button>
-            <button
-              type="button"
-              aria-pressed={lang === "en"}
-              onClick={() => setLang("en")}
-            >
-              EN
-            </button>
-          </div>
+        <nav className="page-nav" aria-label={lang === "zh" ? "页面" : "Pages"}>
+          <a href="#download">{t.download}</a>
+          <a href="#usage">{t.usage}</a>
+          <a href="#about">{t.about}</a>
+        </nav>
+        <div className="lang" role="group" aria-label={lang === "zh" ? "语言" : "Language"}>
+          <button type="button" aria-pressed={lang === "zh"} onClick={() => setLang("zh")}>
+            中文
+          </button>
+          <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>
+            EN
+          </button>
         </div>
       </header>
 
       <main>
         <section className="hero" id="top">
           <div className="hero-head">
-            <span className="code-badge" aria-hidden="true">
+            <a className="code-badge" href={FRA} aria-label="French Reading Assistant">
               FRA
-            </span>
-            <p className="eyebrow">fra.learnlanguage.net</p>
+            </a>
+            <a className="eyebrow" href={FRA}>
+              fra.learnlanguage.net
+            </a>
           </div>
           <h1>{t.brand}</h1>
           {lang === "zh" ? <p className="en-name">{t.enName}</p> : null}
